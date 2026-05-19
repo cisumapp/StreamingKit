@@ -1,0 +1,4270 @@
+Directory structure:
+└── atpugvaraa-youtubesdk/
+    ├── README.md
+    ├── LEGAL_NOTICE.md
+    ├── LICENSE
+    ├── Package.swift
+    ├── Sources/
+    │   └── YouTubeSDK/
+    │       ├── YouTube.swift
+    │       ├── Shared/
+    │       │   ├── Clients.swift
+    │       │   ├── Constants.swift
+    │       │   ├── InnerTubeContext.swift
+    │       │   ├── Keychain.swift
+    │       │   ├── NetworkClient.swift
+    │       │   ├── YouTubeError.swift
+    │       │   ├── Cipher/
+    │       │   │   ├── Cipher.swift
+    │       │   │   └── DecipherEngine.swift
+    │       │   └── UI/
+    │       │       ├── GoogleLoginView.swift
+    │       │       └── YouTubePlayerView.swift
+    │       ├── YouTube/
+    │       │   ├── YouTubeClient+Continuation.swift
+    │       │   ├── YouTubeClient+Playlists.swift
+    │       │   ├── YouTubeClient+Social.swift
+    │       │   ├── YouTubeClient.swift
+    │       │   └── Models/
+    │       │       ├── Stream.swift
+    │       │       ├── YouTubeAISummary.swift
+    │       │       ├── YouTubeChannel.swift
+    │       │       ├── YouTubeContinuation.swift
+    │       │       ├── YouTubeItem.swift
+    │       │       ├── YouTubePlaylist.swift
+    │       │       ├── YouTubeSearchResult.swift
+    │       │       └── YouTubeVideo.swift
+    │       ├── YouTubeAVPlayer/
+    │       │   └── YouTubeAVPlayer.swift
+    │       ├── YouTubeCharts/
+    │       │   ├── YouTubeChartsClient.swift
+    │       │   └── Models/
+    │       │       └── YouTubeChartItem.swift
+    │       ├── YouTubeMusic/
+    │       │   ├── YouTubeMusicClient+Details.swift
+    │       │   ├── YouTubeMusicClient+Discovery.swift
+    │       │   ├── YouTubeMusicClient+Parsing.swift
+    │       │   ├── YouTubeMusicClient+Social.swift
+    │       │   ├── YouTubeMusicClient.swift
+    │       │   └── Models/
+    │       │       ├── YouTubeMusicAlbum.swift
+    │       │       ├── YouTubeMusicArtist.swift
+    │       │       ├── YouTubeMusicHomePage.swift
+    │       │       ├── YouTubeMusicItem.swift
+    │       │       ├── YouTubeMusicPlaylist.swift
+    │       │       ├── YouTubeMusicSection.swift
+    │       │       └── YouTubeMusicSong.swift
+    │       └── YouTubeOAuth/
+    │           └── YouTubeOAuthClient.swift
+    └── Tests/
+        └── YouTubeSDKTests/
+            ├── YouTubeSDKTests.swift
+            ├── CoreTests/
+            │   └── CoreTests.swift
+            ├── YouTubeChartsTests/
+            │   └── YouTubeChartsTests.swift
+            ├── YouTubeMusicTests/
+            │   └── YouTubeMusicTests.swift
+            └── YouTubeOAuthTests/
+                └── YouTubeOAuthTests.swift
+
+================================================
+FILE: README.md
+================================================
+# YouTubeSDK 📺
+
+### The missing YouTube SDK for modern iOS Development.
+
+[![](https://img.shields.io/badge/Platform-iOS%20%7C%20macOS-blue.svg)]()
+[![](https://img.shields.io/badge/Swift-6.2-orange.svg)]()
+[![](https://img.shields.io/badge/SPM-Compatible-green.svg)]()
+
+# Legal Notice
+
+> **Disclaimer**: This repository and any associated code are provided "as is" without warranty of any kind, either expressed or implied. The author of this repository does not accept any responsibility for the use or misuse of this repository or its contents. The author does not endorse any actions or consequences arising from the use of this repository. Any copies, forks, or re-uploads made by other users are not the responsibility of the author. The repository is solely intended as a Proof Of Concept for educational purposes regarding the use of a service's private API. By using this repository, you acknowledge that the author makes no claims about the accuracy, legality, or safety of the code and accepts no liability for any issues that may arise. More information can be found [HERE](./LEGAL_NOTICE.md).
+
+## 📦 Installation
+
+Add `YouTubeSDK` to your project via Swift Package Manager.
+
+```swift
+dependencies: [
+    .package(url: "https://github.com/atpugvaraa/YouTubeSDK.git", from: "1.0.0")
+]
+```
+
+## 🛠️ Quick Start
+
+### 1. Playing a Video (The Easy Way)
+
+No need to manually manage `AVPlayer`. Use the drop-in view:
+
+```swift
+import SwiftUI
+import YouTubeSDK
+
+struct MyPlayerView: View {
+    @StateObject var player = YouTubeAVPlayer()
+
+    var body: some View {
+        YouTubePlayerView(player: player)
+            .onAppear {
+                // One line to load, decipher, and play
+                player.load(videoId: "dQw4w9WgXcQ")
+            }
+    }
+}
+
+```
+
+### 2. Music Search
+
+Access the YouTube Music backend for rich metadata.
+
+```swift
+import YouTubeSDK
+
+let musicClient = YouTubeMusicClient()
+
+func searchSong() async {
+    do {
+        let results = try await musicClient.search("Blinding Lights")
+        if let song = results.first {
+            print("Found: \(song.title) by \(song.artistsDisplay)")
+            // Pass song.videoId to YouTubePlayer to play it!
+        }
+    } catch {
+        print("Error: \(error)")
+    }
+}
+
+```
+
+### 3. Authentication (Optional)
+
+Unlock personalized data like "Liked Songs."
+
+```swift
+// 1. Show Login View
+.sheet(isPresented: $showLogin) {
+    GoogleLoginView { cookies in
+        // 2. Save Session
+        YouTubeOAuthClient.saveCookies(cookies)
+    }
+}
+
+// 3. Initialize Clients with Cookies
+let musicClient = YouTubeMusicClient(cookies: YouTubeOAuthClient.loadCookies())
+let likedSongs = try await musicClient.getLikedSongs()
+
+```
+
+---
+
+## 🤝 Credits & Inspiration
+
+I did not invent the wheel; I refined it. This SDK stands on the shoulders of open-source giants who reverse-engineered the InnerTube API. Huge respect to:
+
+* **YouTube.js (LuanRT):** The gold standard for YouTube reverse engineering.
+* **YouTubeKit (b5i):** For proving this was possible in Swift.
+* **Kaset (sozercan):** For the robust manual parsing strategy for YouTube Music.
+* **NewPipe & yt-dlp:** For the deciphering logic patterns.
+
+My goal is not to compete, but to provide a polished, Swift-native alternative that focuses on **Developer Experience**.
+
+---
+
+## ⚠️ Disclaimer
+
+**YouTubeSDK is an unofficial library.** It is not affiliated with, endorsed by, or associated with YouTube, Google, or Alphabet Inc.
+
+* This project is for **educational and research purposes only**.
+* It uses internal APIs that are subject to change at any time.
+* You are responsible for ensuring your usage complies with YouTube's Terms of Service.
+* "YouTube", "YouTube Music", and "YouTube Charts" are registered trademarks of Google LLC.
+
+---
+
+### License
+
+MIT License. Built with ❤️ by [Aarav Gupta](https://github.com/atpugvaraa).
+
+
+
+================================================
+FILE: LEGAL_NOTICE.md
+================================================
+## Legal Notice
+
+This repository is in no way affiliated with, authorized, maintained, sponsored or endorsed by YouTube, Google LLC (youtube.com), or any of its affiliates or subsidiaries. This project is intended **for educational purposes only**.
+
+Please note the following:
+
+## Legal Notice
+
+### **Affiliation Disclaimer**
+The project is intended for educational purposes only. The APIs, services, trademarks, and other intellectual property mentioned in this repository are the property of their respective owners, with no claim of ownership or affiliation by this project.
+
+### **Liability Limitation**
+Under no circumstances shall the author of this repository be liable for any direct, indirect, incidental, special, consequential, or punitive damages, including but not limited to, loss of profits, data, or use, arising out of or in connection with the repository, regardless of whether such damages were foreseeable and whether the author was advised of the possibility of such damages.
+
+### **No Warranties**
+The repository is provided on an "as is" and "as available" basis without any warranties of any kind, either express or implied, including but not limited to, implied warranties of merchantability, fitness for a particular purpose, or non-infringement.
+
+### **User Responsibility**
+Users assume all risk for their use of this repository and are solely responsible for any damage or loss, including but not limited to financial loss, of any kind, to any party, that results from the use or misuse of the repository and its contents.
+
+### **Legal Compliance**
+Users are responsible for ensuring their use of the repository and its contents complies with all local, state, national, and international laws and regulations.
+
+### **Indemnification**
+Users agree to indemnify, defend, and hold harmless the author from any claims, liabilities, damages, losses, or expenses, including legal fees, arising out of or in any way connected with their use of this repository, violation of these terms, or infringement of any intellectual property or other rights of any person or entity.
+
+### **No Endorsement**
+The inclusion of third-party content does not imply endorsement or recommendation of such content by the author.
+
+### **Governing Law and Jurisdiction**
+Any disputes arising out of or related to the use of this repository shall be governed by the laws of the author's jurisdiction, without regard to its conflict of law principles.
+
+### **Severability**
+If any provision of this notice is found to be unlawful, void, or unenforceable, then that provision shall be deemed severable from this notice and shall not affect the validity and enforceability of any remaining provisions.
+
+### **Acknowledgment of Understanding**
+By using this repository, users acknowledge that they have read, understood, and agree to be bound by these terms.
+
+### **Updates and Changes**
+The author reserves the right to modify, update, or remove any content, information, or features in this repository at any time without prior notice. Users are responsible for regularly reviewing the content and any changes made to this repository.
+
+### **Unforeseen Consequences**
+The author of this repository is not responsible for any consequences, damages, or losses arising from the use or misuse of this repository or the content provided by the third-party APIs. Users are solely responsible for their actions and any repercussions that may follow. 
+
+### **Educational Purpose**
+Please note that this project and its content are provided strictly for educational purposes. Users acknowledge that they are using the APIs at their own risk and agree to comply with any applicable laws and regulations.
+
+
+
+================================================
+FILE: LICENSE
+================================================
+MIT License
+
+Copyright (c) 2026 Aarav Gupta
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+
+
+
+================================================
+FILE: Package.swift
+================================================
+// swift-tools-version: 6.0
+// The swift-tools-version declares the minimum version of Swift required to build this package.
+
+import PackageDescription
+
+let package = Package(
+    name: "YouTubeSDK",
+    platforms: [
+        .iOS(.v17),
+        .macOS(.v14)
+    ],
+    products: [
+        .library(name: "YouTubeSDK", targets: ["YouTubeSDK"])
+    ],
+    targets: [
+        .target(name: "YouTubeSDK"),
+        .testTarget(name: "YouTubeSDKTests", dependencies: ["YouTubeSDK"])
+    ]
+)
+
+
+
+================================================
+FILE: Sources/YouTubeSDK/YouTube.swift
+================================================
+//
+//  YouTube.swift
+//  YouTubeSDK
+//
+//  Created by Aarav Gupta on 13/03/26.
+//
+
+import Foundation
+
+/// The central entry point for the YouTubeSDK.
+/// Use this manager to access Main YouTube, Music, Charts, and Auth functionalities.
+@MainActor
+public final class YouTube {
+    
+    /// Shared singleton instance for ease of use.
+    public static let shared = YouTube()
+    
+    /// The current session cookies. Setting this will update all child clients.
+    public var cookies: String? {
+        didSet {
+            updateClients()
+        }
+    }
+    
+    /// Main YouTube Client (Videos, Search, Browsing)
+    public private(set) var main: YouTubeClient
+    
+    /// YouTube Music Client (Discovery, Artist/Album/Playlist, Library)
+    public private(set) var music: YouTubeMusicClient
+    
+    /// YouTube Charts Client (Top Songs, Videos, Artists)
+    public private(set) var charts: YouTubeChartsClient
+    
+    /// OAuth and Session Management Client
+    public private(set) var oauth: YouTubeOAuthClient
+    
+    public init(cookies: String? = nil) {
+        self.cookies = cookies ?? YouTubeOAuthClient.loadCookies()
+        
+        // Initialize clients with initial cookies
+        self.main = YouTubeClient(cookies: self.cookies)
+        self.music = YouTubeMusicClient(cookies: self.cookies)
+        self.charts = YouTubeChartsClient() // Charts usually doesn't need auth, but can be configured
+        self.oauth = YouTubeOAuthClient()
+    }
+    
+    /// Re-initializes clients with updated session information.
+    private func updateClients() {
+        self.main = YouTubeClient(cookies: cookies)
+        self.music = YouTubeMusicClient(cookies: cookies)
+        // Charts and OAuth might not strictly need re-init depending on implementation, 
+        // but for safety we ensure they have the latest context if applicable.
+    }
+}
+
+
+
+================================================
+FILE: Sources/YouTubeSDK/Shared/Clients.swift
+================================================
+//
+//  Clients.swift
+//  YouTubeSDK
+//
+//  Created by Aarav Gupta on 26/12/25.
+//
+
+import Foundation
+
+/// Defines the static identity of a YouTube Client.
+/// This struct holds the "Magic Strings" required to mimic an official app.
+/// https://github.com/zerodytrash/YouTube-Internal-Clients <- The goat
+public struct ClientConfig: Sendable {
+    
+    public let name: String            // The internal client name (e.g., "IOS", "WEB_REMIX")
+    public let version: String         // The app version (e.g., "19.10.5")
+    public let apiKey: String          // The Google API Key
+    public let userAgent: String       // The User-Agent header string
+    public let clientNameID: String    // The numeric ID used in some stats logs
+    
+    // MARK: - The Golden List of Presets
+    
+    /// The Standard Web Client. Best for Charts and Public Data.
+    public static let web = ClientConfig(
+        name: "WEB",
+        version: "2.20240308.00.00",
+        apiKey: "AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8", // From zerodytrash (Web)
+        userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+        clientNameID: "1"
+    )
+    
+    /// The YouTube Music Web Client. Best for Lyrics and Metadata.
+    public static let webRemix = ClientConfig(
+        name: "WEB_REMIX",
+        version: "1.20240308.00.00",
+        apiKey: "AIzaSyC9XL3ZjWddXya6X74dJoCTL-WEYFDNX30", // From zerodytrash (Web Music)
+        userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+        clientNameID: "67"
+    )
+    
+    public static let webMusicAnalytics = ClientConfig(
+        name: "WEB_MUSIC_ANALYTICS",
+        version: "2.0",
+        apiKey: "AIzaSyC9XL3ZjWddXya6X74dJoCTL-WEYFDNX30", // From zerodytrash (Web Music)
+        userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+        clientNameID: "31"
+    )
+    
+    /// The standard iOS Client. Best for generic Video and Search.
+    public static let ios = ClientConfig(
+        name: "IOS",
+        version: "20.11.6",
+        apiKey: "AIzaSyB-63vPrdThhKuerbB2N_l7Kwwcxj6yUAc", // From zerodytrash
+        userAgent: "com.google.ios.youtube/20.11.6 (iPhone10,4; U; CPU iOS 16_7_7 like Mac OS X)",
+        clientNameID: "5"
+    )
+    
+    /// The YouTube Music Native Client. Best for High-Quality Audio.
+    public static let iosMusic = ClientConfig(
+        name: "IOS_MUSIC",
+        version: "6.43.52", // Recent stable version
+        apiKey: "AIzaSyBAETezhkwP0ZWA02RsqT1zu78Fpt0bC_s", // From zerodytrash (iOS Music)
+        userAgent: "com.google.ios.youtube/20.11.6 (iPhone10,4; U; CPU iOS 16_7_7 like Mac OS X)",
+        clientNameID: "26"
+    )
+    
+    /// The Android Client. Reliable backup for Video.
+    public static let android = ClientConfig(
+        name: "ANDROID",
+        version: "19.35.36",
+        apiKey: "AIzaSyA8eiZmM1FaDVjRy-df2KTyQ_vz_yYM39w", // From zerodytrash
+        userAgent: "com.google.android.youtube/19.35.36 (Linux; U; Android 13; en_US) gzip",
+        clientNameID: "3"
+    )
+    
+    /// The YouTube Music Native Client. Best for High-Quality Audio.
+    public static let androidMusic = ClientConfig(
+        name: "ANDROID_MUSIC",
+        version: "6.43.52", // Recent stable version
+        apiKey: "AIzaSyAOghZGza2MQSZkY_zfZ370N-PUdXEo8AI", // From zerodytrash (Android Music)
+        userAgent: "com.google.android.apps.youtube.music/6.43.52 (Linux; U; Android 13; en_US) gzip",
+        clientNameID: "21"
+    )
+    
+    /// The TV Client. Essential for the "Code" Authentication flow.
+    public static let tv = ClientConfig(
+        name: "TVHTML5",
+        version: "7.20250219.14.00",
+        apiKey: "AIzaSyBUPetSUmoZL-OhlxA7wSac5XinrygCqMo", // Generic Safe Key
+        userAgent: "Mozilla/5.0 (ChromiumStylePlatform) Cobalt/Version",
+        clientNameID: "7"
+    )
+}
+
+
+
+================================================
+FILE: Sources/YouTubeSDK/Shared/Constants.swift
+================================================
+//
+//  Constants.swift
+//  YouTubeSDK
+//
+//  Created by Aarav Gupta on 26/12/25.
+//
+
+import Foundation
+
+public struct YouTubeSDKConstants {
+    public struct URLS {
+        public static let googleSearchBaseURL = "https://www.google.com"
+        public static let youtubeBaseURL = "https://www.youtube.com"
+        public static let youtubeMusicBaseURL = "https://music.youtube.com"
+        public static let youtubeSuggestions = "https://suggestqueries-clients6.youtube.com"
+        public static let youtubeUpload = "https://upload.youtube.com"
+        
+        public struct API {
+            /// Generic Base URL
+            public static let baseURL = "https://youtubei.googleapis.com"
+            
+            /// Generic Production URLs
+            public static let youtubeInnerTubeURL = "https://www.youtube.com/youtubei"
+            public static let youtubeMusicInnerTubeURL = "https://music.youtube.com/youtubei"
+            public static let youtubeChartsInnerTubeURL = "https://charts.youtube.com/youtubei"
+
+            /// Suggestions URLs
+            public static let youtubeSuggestionsURL = "https://suggestqueries-clients6.youtube.com/complete"
+            
+            /// Random InnerTube API URLs
+            public static let googleapisInnerTubeURL = "https://youtubei.googleapis.com/youtubei"
+            public static let stagingURL = "https://green-youtubei.sandbox.googleapis.com/youtubei"
+            public static let releaseURL = "https://release-youtubei.sandbox.googleapis.com/youtubei"
+            public static let testURL = "https://test-youtubei.sandbox.googleapis.com/youtubei"
+            public static let camiURL = "https://cami-youtubei.sandbox.googleapis.com/youtubei"
+            public static let uytfeURL = "https://uytfe.sandbox.googleapis.com/youtubei"
+        }
+    }
+    
+    public struct InternalKeys {
+        public struct Renderers {
+            public static let video = "videoRenderer"
+            public static let gridVideo = "gridVideoRenderer"
+            public static let compactVideo = "compactVideoRenderer"
+            public static let videoWithContext = "videoWithContextRenderer"
+            public static let reelItem = "reelItemRenderer"
+            public static let richItem = "richItemRenderer"
+            public static let itemSection = "itemSectionRenderer"
+            public static let shelf = "shelfRenderer"
+            public static let musicVideo = "musicVideoRenderer"
+            public static let musicResponsiveListItem = "musicResponsiveListItemRenderer"
+            public static let playlistVideo = "playlistVideoRenderer"
+            public static let channel = "channelRenderer"
+            public static let playlist = "playlistRenderer"
+            public static let musicShelf = "musicShelfRenderer"
+            public static let musicCarouselShelf = "musicCarouselShelfRenderer"
+        }
+        
+        public struct BrowseIDs {
+            // Main YouTube
+            public static let home = "FEwhat_to_watch"
+            public static let trending = "FEtrending"
+            
+            // YouTube Music
+            public struct Music {
+                public static let home = "FEmusic_home"
+                public static let explore = "FEmusic_explore"
+                public static let charts = "FEmusic_charts"
+                public static let newReleases = "FEmusic_new_releases"
+                public static let moods = "FEmusic_moods_and_genres"
+                public static let library = "FEmusic_library"
+                public static let history = "FEmusic_history"
+                public static let likedVideos = "FEmusic_liked_videos"
+            }
+        }
+    }
+}
+
+
+
+================================================
+FILE: Sources/YouTubeSDK/Shared/InnerTubeContext.swift
+================================================
+//
+//  InnerTubeContext.swift
+//  YouTubeSDK
+//
+//  Created by Aarav Gupta on 26/12/25.
+//
+
+import Foundation
+
+/// Responsible for building the JSON payload required for every InnerTube request.
+public struct InnerTubeContext: Sendable {
+    
+    private let client: ClientConfig
+    public let cookies: String?
+    
+    private let gl: String // Geo-Location (e.g., "US")
+    private let hl: String // Host Language (e.g., "en")
+    
+    public init(client: ClientConfig, cookies: String? = nil, gl: String = "US", hl: String = "en") {
+        self.client = client
+        self.cookies = cookies
+        self.gl = gl
+        self.hl = hl
+    }
+    
+    // MARK: - Public Properties for Networking
+    
+    /// The API Key to append to the URL.
+    public var apiKey: String {
+        return client.apiKey
+    }
+    
+    /// The headers required for the HTTP Request.
+    public var headers: [String: String] {
+        var defaultHeaders = [
+            "User-Agent": client.userAgent,
+            "Content-Type": "application/json",
+            "X-YouTube-Client-Name": client.clientNameID,
+            "X-YouTube-Client-Version": client.version
+        ]
+        
+        // Inject Cookies if present
+        if let cookies = cookies {
+            defaultHeaders["Cookie"] = cookies
+            
+            // Authorization header is usually needed with cookies for some calls
+            // We extract the SAPISID from the cookie to generate the SAPISIDHASH (we can add this later)
+        }
+        
+        return defaultHeaders
+    }
+    
+    /// The JSON body required for the HTTP Request.
+    public var body: [String: Any] {
+        return [
+            "context": [
+                "client": [
+                    "clientName": client.name,
+                    "clientVersion": client.version,
+                    "gl": gl,
+                    "hl": hl,
+                    "timeZone": "UTC",
+                    "utcOffsetMinutes": 0
+                ],
+                "user": [
+                    "lockedSafetyMode": false
+                ]
+            ]
+        ]
+    }
+}
+
+
+
+================================================
+FILE: Sources/YouTubeSDK/Shared/Keychain.swift
+================================================
+//
+//  Keychain.swift
+//  YouTubeSDK
+//
+//  Created by Aarav Gupta on 30/12/25.
+//
+
+import Foundation
+import Security
+
+public struct Keychain {
+    
+    // A namespace for your app so keys don't collide with other apps
+    private static let serviceName = "aaravgupta.youtubesdk.security"
+    
+    /// Saves a string to the Keychain.
+    /// - Parameters:
+    ///   - value: The string to save (e.g., the cookie string).
+    ///   - key: A unique identifier (e.g., "youtube_cookies").
+    public static func save(_ value: String, key: String) {
+        guard let data = value.data(using: .utf8) else { return }
+        
+        // 1. Create a query to identify the item
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: serviceName,
+            kSecAttrAccount as String: key,
+            kSecValueData as String: data
+        ]
+        
+        // 2. Delete any existing item with this key (simplest update strategy)
+        SecItemDelete(query as CFDictionary)
+        
+        // 3. Add the new item
+        let status = SecItemAdd(query as CFDictionary, nil)
+        
+        if status != errSecSuccess {
+            print("⚠️ Keychain Save Error: \(status)")
+        }
+    }
+    
+    /// Retrieves a string from the Keychain.
+    public static func load(key: String) -> String? {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: serviceName,
+            kSecAttrAccount as String: key,
+            kSecReturnData as String: true,       // We want the data back
+            kSecMatchLimit as String: kSecMatchLimitOne // We only want one result
+        ]
+        
+        var dataTypeRef: AnyObject?
+        let status = SecItemCopyMatching(query as CFDictionary, &dataTypeRef)
+        
+        if status == errSecSuccess {
+            if let data = dataTypeRef as? Data {
+                return String(data: data, encoding: .utf8)
+            }
+        }
+        return nil
+    }
+    
+    /// Deletes an item from the Keychain.
+    public static func delete(key: String) {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: serviceName,
+            kSecAttrAccount as String: key
+        ]
+        
+        SecItemDelete(query as CFDictionary)
+    }
+}
+
+
+
+================================================
+FILE: Sources/YouTubeSDK/Shared/NetworkClient.swift
+================================================
+//
+//  NetworkClient.swift
+//  YouTubeSDK
+//
+//  Created by Aarav Gupta on 26/12/25.
+//
+
+import Foundation
+
+/// The simplified networking engine.
+/// It takes the Context we built and sends it to the URLs we defined.
+public actor NetworkClient {
+    
+    private let context: InnerTubeContext
+    private let session: URLSession
+    private let baseURL: String
+    
+    /// - Parameters:
+    /// - baseURL: The host URL (e.g., "https://music.youtube.com/youtubei")
+    /// - easier usage: `YouTubeSDKConstants.URLS.API.<api you want to use>`
+    public init(context: InnerTubeContext, session: URLSession = .shared, baseURL: String = YouTubeSDKConstants.URLS.API.youtubeInnerTubeURL) {
+        self.context = context
+        self.session = session
+        self.baseURL = baseURL
+    }
+    
+    /// Sends a request to YouTube.
+    /// - Parameters:
+    ///   - endpoint: The API path (e.g., "/v1/player")
+    ///   - body: The unique data for this request (e.g., ["videoId": "123"])
+    /// - Returns: The decoded response
+    /// Sends a request and decodes it immediately.
+    public func send<T: Decodable>(_ endpoint: String, body: [String: String] = [:]) async throws -> T {
+        let data = try await get(endpoint, body: body)
+        let decoder = JSONDecoder()
+        return try decoder.decode(T.self, from: data)
+    }
+    
+    /// Sends a request and returns the Raw Data (no decoding).
+    /// Useful for complex endpoints where we need to inspect the JSON before decoding.
+    public func get(_ endpoint: String, body: [String: String] = [:]) async throws -> Data {
+        let typedBody = body.reduce(into: [String: Any]()) { partialResult, item in
+            partialResult[item.key] = item.value
+        }
+        return try await sendRawRequest(endpoint, body: typedBody)
+    }
+    
+    // Overload for complex bodies (needed for Charts & Analytics)
+    /// Sends a request with a complex nested body (required for Like, Subscribe, etc.)
+    public func sendComplexRequest(
+        _ endpoint: String,
+        body: [String: Any],
+        queryItems: [URLQueryItem] = [],
+        additionalHeaders: [String: String] = [:]
+    ) async throws -> Data {
+        return try await sendRawRequest(
+            endpoint,
+            body: body,
+            queryItems: queryItems,
+            additionalHeaders: additionalHeaders
+        )
+    }
+
+    private func sendRawRequest(
+        _ endpoint: String,
+        body: [String: Any],
+        queryItems: [URLQueryItem] = [],
+        additionalHeaders: [String: String] = [:]
+    ) async throws -> Data {
+        let url = try makeEndpointURL(endpoint, additionalQueryItems: queryItems)
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+
+        for (key, value) in context.headers {
+            request.setValue(value, forHTTPHeaderField: key)
+        }
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        for (key, value) in additionalHeaders {
+            request.setValue(value, forHTTPHeaderField: key)
+        }
+
+        if let host = URL(string: baseURL)?.host {
+            let origin = "https://\(host)"
+            request.setValue(origin, forHTTPHeaderField: "Origin")
+            request.setValue("\(origin)/", forHTTPHeaderField: "Referer")
+        }
+
+        var payload = context.body
+        for (key, value) in body {
+            payload[key] = value
+        }
+
+        request.httpBody = try JSONSerialization.data(withJSONObject: payload)
+
+        let (data, response) = try await session.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw URLError(.badServerResponse)
+        }
+
+        if httpResponse.statusCode != 200 {
+            if let requestBody = request.httpBody,
+               let requestBodyString = String(data: requestBody, encoding: .utf8) {
+                print("❌ YouTube Request URL: \(url.absoluteString)")
+                print("❌ YouTube Request Body: \(requestBodyString)")
+            }
+            if let errorString = String(data: data, encoding: .utf8) {
+                print("❌ YouTube Error (\(httpResponse.statusCode)): \(errorString)")
+            }
+            throw URLError(.badServerResponse)
+        }
+
+        return data
+    }
+
+    private func makeEndpointURL(_ endpoint: String, additionalQueryItems: [URLQueryItem] = []) throws -> URL {
+        guard let rootURL = URL(string: baseURL) else {
+            throw URLError(.badURL)
+        }
+
+        let trimmed = endpoint.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        let endpointPath: String
+        if trimmed.isEmpty {
+            endpointPath = "v1"
+        } else if trimmed == "v1" || trimmed.hasPrefix("v1/") {
+            endpointPath = trimmed
+        } else {
+            endpointPath = "v1/\(trimmed)"
+        }
+
+        var components = URLComponents(url: rootURL.appendingPathComponent(endpointPath), resolvingAgainstBaseURL: true)
+        var queryItems = [URLQueryItem(name: "key", value: context.apiKey)]
+        queryItems.append(contentsOf: additionalQueryItems)
+        components?.queryItems = queryItems
+
+        guard let finalURL = components?.url else {
+            throw URLError(.badURL)
+        }
+
+        return finalURL
+    }
+}
+
+
+
+================================================
+FILE: Sources/YouTubeSDK/Shared/YouTubeError.swift
+================================================
+//
+//  YouTubeError.swift
+//  YouTubeSDK
+//
+//  Created by Aarav Gupta on 13/03/26.
+//
+
+import Foundation
+
+public enum YouTubeError: LocalizedError {
+    case networkError(Error)
+    case apiError(message: String)
+    case parsingError(details: String)
+    case decipheringFailed(videoId: String)
+    case authenticationRequired
+    case unknown
+
+    public var errorDescription: String? {
+        switch self {
+        case .networkError(let error):
+            return "Network Error: \(error.localizedDescription)"
+        case .apiError(let message):
+            return "API Error: \(message)"
+        case .parsingError(let details):
+            return "Parsing Error: \(details)"
+        case .decipheringFailed(let videoId):
+            return "Deciphering Failed for video ID: \(videoId)"
+        case .authenticationRequired:
+            return "Authentication Required: Please sign in to perform this action."
+        case .unknown:
+            return "An unknown error occurred."
+        }
+    }
+}
+
+
+
+================================================
+FILE: Sources/YouTubeSDK/Shared/Cipher/Cipher.swift
+================================================
+//
+//  Cipher.swift
+//  YouTubeSDK
+//
+//  Created by Aarav Gupta on 01/01/26.
+//
+
+import Foundation
+
+actor Cipher {
+    // We cache the script URL because it changes rarely
+    static let shared = Cipher()
+    private var cachedScriptURL: String?
+    
+    private let engine = DecipherEngine()
+    private var isEngineReady: Bool = false
+    
+    /// Fetches the current player JS URL from the YouTube Watch Page
+    func getCipherScriptURL(network: NetworkClient) async throws -> String {
+        if let cached = cachedScriptURL { return cached }
+        
+        // 1. Fetch the raw HTML of a video page (any video works)
+        // We use the Web Client because it always has the script reference
+        let htmlData = try await network.get("https://www.youtube.com/watch?v=dQw4w9WgXcQ", body: [:])
+        // Note: You might need to add a 'sendGET' method to NetworkClient that takes a full URL string
+        
+        guard let html = String(data: htmlData, encoding: .utf8) else { throw URLError(.cannotParseResponse) }
+        
+        // 2. Regex to find the script path
+        // Pattern: <script src="/s/player/nw123/player_ias.vflset/en_US/base.js">
+        let pattern = #"/s/player/[a-zA-Z0-9]+/[a-zA-Z0-9_.]+/([a-zA-Z0-9_]{2,}/)?base\.js"#
+        
+        guard let range = html.range(of: pattern, options: .regularExpression) else {
+            throw URLError(.resourceUnavailable)
+        }
+        
+        let path = String(html[range])
+        let fullURL = "https://www.youtube.com\(path)"
+        
+        self.cachedScriptURL = fullURL
+        return fullURL
+    }
+    
+    func decipher(url: String, signatureCipher: String, network: NetworkClient) async throws -> URL {
+        if !isEngineReady {
+            let scriptURL = try await getCipherScriptURL(network: network)
+            print("Fetching Cipher Script: \(scriptURL)")
+            
+            // We need to fetch the raw JS text.
+            // Note: Ensure NetworkClient allows GET requests to external URLs
+            let scriptData = try await network.get(scriptURL, body: [:])
+            guard let script = String(data: scriptData, encoding: .utf8) else {
+                throw URLError(.cannotParseResponse)
+            }
+            
+            try engine.loadCipherScript(script)
+            isEngineReady = true
+        }
+        
+        // 2. Parse the cipher string
+        let cipherParams = parseCipher(signatureCipher)
+        guard let signature = cipherParams["s"], let signatureParams = cipherParams["sp"] else {
+            return URL(string: url)!
+        }
+        
+        let decryptedSignature = try engine.decipher(signature: signature)
+        
+        // 3. Construct the final URL
+        // Original URL + "&sig=DBCA" (or whatever 'sp' is, usually 'sig')
+        var components = URLComponents(string: cipherParams["url"] ?? url)
+        var queryItems = components?.queryItems ?? []
+        queryItems.append(URLQueryItem(name: signatureParams, value: decryptedSignature))
+        components?.queryItems = queryItems
+        
+        guard let finalURL = components?.url else { throw URLError(.badURL) }
+        return finalURL
+    }
+}
+
+extension Cipher {
+    /// Breaks down the "signatureCipher" string into a dictionary
+    func parseCipher(_ cipher: String) -> [String: String] {
+        var params: [String: String] = [:]
+        // It's URL encoded, so we separate by '&'
+        for pair in cipher.components(separatedBy: "&") {
+            let parts = pair.components(separatedBy: "=")
+            if parts.count == 2 {
+                // Decode the values (they are percent-coded)
+                let key = parts[0]
+                let value = parts[1].removingPercentEncoding ?? parts[1]
+                params[key] = value
+            }
+        }
+        
+        return params
+    }
+}
+
+
+
+================================================
+FILE: Sources/YouTubeSDK/Shared/Cipher/DecipherEngine.swift
+================================================
+//
+//  DecipherEngine.swift
+//  YouTubeSDK
+//
+//  Created by Aarav Gupta on 01/01/26.
+//
+
+import Foundation
+import JavaScriptCore
+
+class DecipherEngine {
+    let context = JSContext()!
+    
+    private var decipherFunctionName: String?
+    
+    /// Loads the script and prepares the environment
+    func loadCipherScript(_ script: String) throws {
+        // 1. Evaluate the WHOLE script first (so all variables exist)
+        // This puts 'base.js' into memory.
+        context.evaluateScript(script)
+        
+        // 2. Find the Entry Point Function name
+        // Regex Explanation:
+        // [a-zA-Z0-9_$]+  -> Find a variable name (e.g. "Go")
+        // \s*=\s*function\(a\) -> That is assigned a function taking 'a'
+        // \{\s*a=a\.split\(""\) -> That immediately splits 'a'
+        let pattern = #"([a-zA-Z0-9_$]+)\s*=\s*function\([a-zA-Z0-9_$]+\)\s*\{\s*[a-zA-Z0-9_$]+\s*=\s*[a-zA-Z0-9_$]+\.split\(""[\s\S]*?\}"#
+        
+        guard let regex = try? NSRegularExpression(pattern: pattern),
+              let match = regex.firstMatch(in: script, range: NSRange(script.startIndex..., in: script)),
+              let range = Range(match.range(at: 1), in: script) else {
+            print("DECIPHER ENGINE: Couldn't find decipher function")
+            throw URLError(.resourceUnavailable)
+        }
+        
+        let functionName = String(script[range])
+        self.decipherFunctionName = functionName
+        print("DECIPHER ENGINE: LOCKED IN and founc function '\(functionName)'")
+    }
+    
+    /// Unlocks a signature
+    func decipher(signature: String) throws -> String {
+        // We call the decipher function (we have to find its name first)
+        // This is the tricky part: Finding the function name.
+        // It usually looks like:  a.b(sig)
+        guard let functionName = decipherFunctionName else {
+            throw URLError(.userAuthenticationRequired)
+        }
+        
+        // Call the JS Function from Swift
+        // "Go('Ag82xb...')"
+        let result = context.evaluateScript("\(functionName)'\(signature)'")
+        
+        if let decrypted = result?.toString(), !decrypted.isEmpty, decrypted != "undefined" {
+            return decrypted
+        } else {
+            throw URLError(.cannotDecodeRawData)
+        }
+    }
+}
+
+
+
+================================================
+FILE: Sources/YouTubeSDK/Shared/UI/GoogleLoginView.swift
+================================================
+//
+//  GoogleLoginView.swift
+//  YouTubeSDK
+//
+//  Created by Aarav Gupta on 30/12/25.
+//
+
+import SwiftUI
+import WebKit
+
+/// Example usage:
+/// In SwiftUI
+///.sheet(isPresented: $showLogin) {
+///    GoogleLoginView { cookies in
+///        // 1. Save the session
+///        YouTubeOAuthClient.saveCookies(cookies)
+///
+///        // 2. Refresh your services
+///        yourService.login()
+///
+///        showLogin = false
+///    }
+///}
+
+#if os(iOS) || os(macOS)
+
+public struct GoogleLoginView: View {
+    
+    public var onLoginSuccess: (String) -> Void
+    
+    public init(onLoginSuccess: @escaping (String) -> Void) {
+        self.onLoginSuccess = onLoginSuccess
+    }
+    
+    public var body: some View {
+        WebViewWrapper(onCookiesFound: onLoginSuccess)
+            .ignoresSafeArea()
+    }
+}
+
+// MARK: - Cross Platform Wrapper
+
+#if os(macOS)
+// macOS Implementation
+struct WebViewWrapper: NSViewRepresentable {
+    var onCookiesFound: (String) -> Void
+    
+    func makeNSView(context: Context) -> WKWebView {
+        return SharedWebViewLogic.makeWebView(context: context)
+    }
+    
+    func updateNSView(_ nsView: WKWebView, context: Context) {}
+    
+    func makeCoordinator() -> SharedWebViewLogic.Coordinator {
+        SharedWebViewLogic.Coordinator(onCookiesFound: onCookiesFound)
+    }
+}
+#else
+// iOS Implementation
+struct WebViewWrapper: UIViewRepresentable {
+    var onCookiesFound: (String) -> Void
+    
+    func makeUIView(context: Context) -> WKWebView {
+        return SharedWebViewLogic.makeWebView(context: context)
+    }
+    
+    func updateUIView(_ uiView: WKWebView, context: Context) {}
+    
+    func makeCoordinator() -> SharedWebViewLogic.Coordinator {
+        SharedWebViewLogic.Coordinator(onCookiesFound: onCookiesFound)
+    }
+}
+#endif
+
+// MARK: - Shared Logic (To avoid code duplication)
+
+struct SharedWebViewLogic {
+    
+    @MainActor static func makeWebView(context: Context) -> WKWebView {
+        let config = WKWebViewConfiguration()
+        // Essential: Non-persistent store avoids conflicts with Safari/System
+        config.websiteDataStore = WKWebsiteDataStore.nonPersistent()
+        
+        let webView = WKWebView(frame: .zero, configuration: config)
+        
+        // We use the coordinator from the specific platform wrapper
+        #if os(macOS)
+        webView.navigationDelegate = context.coordinator
+        #else
+        webView.navigationDelegate = context.coordinator
+        #endif
+        
+        // Load Google Login (Service=YouTube ensures we get the right cookies)
+        if let url = URL(string: "https://accounts.google.com/ServiceLogin?service=youtube&passive=true&continue=https://www.youtube.com") {
+            webView.load(URLRequest(url: url))
+        }
+        
+        return webView
+    }
+    
+    // The Coordinator handles the cookie extraction logic
+    class Coordinator: NSObject, WKNavigationDelegate {
+        var onCookiesFound: (String) -> Void
+        
+        init(onCookiesFound: @escaping (String) -> Void) {
+            self.onCookiesFound = onCookiesFound
+        }
+        
+        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            webView.configuration.websiteDataStore.httpCookieStore.getAllCookies { cookies in
+                
+                // We verify login by looking for the "SAPISID" authentication cookie
+                let hasSession = cookies.contains { $0.name == "SAPISID" }
+                
+                if hasSession {
+                    // Combine into "key=value; key2=value2" string
+                    let cookieString = cookies.map { "\($0.name)=\($0.value)" }.joined(separator: "; ")
+                    
+                    print("✅ [GoogleLoginView] Login Successful!")
+                    self.onCookiesFound(cookieString)
+                }
+            }
+        }
+    }
+}
+
+// Helper typealias to make 'Context' work in Shared Logic
+#if os(macOS)
+typealias Context = NSViewRepresentableContext<WebViewWrapper>
+#else
+typealias Context = UIViewRepresentableContext<WebViewWrapper>
+#endif
+
+#endif
+
+
+
+================================================
+FILE: Sources/YouTubeSDK/Shared/UI/YouTubePlayerView.swift
+================================================
+//
+//  YouTubePlayerView.swift
+//  YouTubeSDK
+//
+//  Created by Aarav Gupta on 01/01/26.
+//
+
+import SwiftUI
+import AVKit
+
+public struct YouTubePlayerView: View {
+    
+    @ObservedObject var player: YouTubeAVPlayer
+    var mode: PlayerMode
+    
+    public enum PlayerMode {
+        case video
+        case audio
+    }
+    
+    public init(player: YouTubeAVPlayer, mode: PlayerMode = .video) {
+        self.player = player
+        self.mode = mode
+    }
+    
+    public var body: some View {
+        ZStack {
+            Color.black
+            
+            VideoPlayer(player: player)
+                .disabled(player.isLoading)
+            
+            if mode == .audio || player.isLoading {
+                ArtworkOverlay()
+            }
+            
+            if player.isLoading {
+                ProgressView()
+                    .tint(.white)
+                    .controlSize(.large)
+            }
+            
+            if let errorText = player.playbackError {
+                ContentUnavailableView("Playback Error", systemImage: "exclamationmark.triangle", description: Text(errorText))
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private func ArtworkOverlay() -> some View {
+        ZStack {
+            if let urlString = player.currentVideo?.thumbnailURL, let url = URL(string: urlString) {
+                
+                // Background Blur
+                AsyncImage(url: url) { image in
+                    image.resizable()
+                         .aspectRatio(contentMode: .fill)
+                         .cornerRadius(12)
+//                         .blur(radius: 20)
+                } placeholder: {
+                    Color.black
+                }
+            } else {
+                Color.black
+            }
+        }
+    }
+}
+
+
+
+================================================
+FILE: Sources/YouTubeSDK/YouTube/YouTubeClient+Continuation.swift
+================================================
+//
+//  YouTubeClient+Parsing.swift
+//  YouTubeSDK
+//
+//  Created by Aarav Gupta on 13/03/26.
+//
+
+import Foundation
+
+struct SearchResponseDiagnostics: Sendable {
+    let topLevelKeys: [String]
+    let frameworkUpdateCount: Int
+    let continuationItemCount: Int
+    let directRendererCount: Int
+    let wrapperRendererCount: Int
+
+    var hasParseableContainers: Bool {
+        // Only consider a response parseable if it contains direct renderers or continuations.
+        // Many responses include EKO template "wrappers" which are not actual search result containers.
+        return directRendererCount > 0 || continuationItemCount > 0
+    }
+
+    var summary: String {
+        return "topLevelKeys=\(topLevelKeys) frameworkUpdates=\(frameworkUpdateCount) continuationItems=\(continuationItemCount) directRenderers=\(directRendererCount) wrappers=\(wrapperRendererCount) hasParseableContainers=\(hasParseableContainers)"
+    }
+}
+
+extension YouTubeClient {
+
+    // MARK: - Continuation
+
+    /// Fetches the next page of results using a continuation token.
+    /// - Parameter token: The token retrieved from a previous result.
+    public func fetchContinuation(token: String, musicOnly: Bool = false) async throws -> YouTubeContinuation<YouTubeItem> {
+        // Search continuations can be returned in different token encodings and
+        // may require either the `search` or `browse` endpoint depending on
+        // server-side routing. Try the most likely combinations in order.
+        let tokenCandidates = continuationTokenCandidates(from: token)
+        let endpointCandidates = ["search", "browse"]
+
+        var attempt = 0
+        var lastError: Error?
+        for endpoint in endpointCandidates {
+            for candidate in tokenCandidates {
+                attempt += 1
+                let body = ["continuation": candidate]
+                do {
+                    if attempt == 1 {
+                        print("yt_fetch_continuation token_candidates=\(tokenCandidates.map { $0.count }) endpoints=\(endpointCandidates)")
+                    }
+
+                    print("yt_fetch_continuation try attempt=\(attempt) endpoint=\(endpoint) tokenLen=\(candidate.count) tokenHasPercent=\(candidate.contains("%"))")
+                    let data = try await webSearchNetwork.get(endpoint, body: body)
+//                let diagnostics = diagnoseSearchResponse(from: data)
+//                    print("yt_fetch_continuation client=WEB attempt=\(attempt) endpoint=\(endpoint) \(diagnostics.summary)")
+//                    writeSearchDebugDump(data, clientName: "web_continuation_\(endpoint)")
+                    var continuation = parseContinuationResults(from: data)
+                    if musicOnly {
+                        continuation = filteredMusicContinuation(continuation)
+                    }
+                    return continuation
+                } catch {
+                    lastError = error
+                    let ns = error as NSError
+                    print("yt_fetch_continuation error client=WEB attempt=\(attempt) endpoint=\(endpoint) code=\(ns.code) domain=\(ns.domain) body=\(body)")
+
+                    // Lightweight backoff between candidate attempts.
+                    try? await Task.sleep(for: .milliseconds(250))
+                    continue
+                }
+            }
+        }
+
+        throw lastError ?? YouTubeError.apiError(message: "Unknown continuation failure")
+    }
+
+    private func continuationTokenCandidates(from token: String) -> [String] {
+        let trimmed = token.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return [] }
+
+        var candidates: [String] = [trimmed]
+        var current = trimmed
+
+        // Some responses ship continuation tokens in doubly/triply encoded forms.
+        // Decode iteratively to produce a small candidate set.
+        for _ in 0..<6 {
+            guard let decoded = current.removingPercentEncoding, decoded != current else {
+                break
+            }
+            current = decoded
+            candidates.append(current)
+        }
+
+        // Preserve order while removing duplicates.
+        var seen = Set<String>()
+        return candidates.filter { seen.insert($0).inserted }
+    }
+
+    // MARK: - Helpers
+    func findContinuationToken(in container: Any) -> String? {
+        if let dict = container as? [String: Any] {
+            if let token = dict["continuation"] as? String { return token }
+            if let continuationData = (dict["continuationEndpoint"] as? [String: Any])?["continuationCommand"] as? [String: Any] {
+                return continuationData["token"] as? String
+            }
+            for value in dict.values {
+                if let found = findContinuationToken(in: value) { return found }
+            }
+        } else if let array = container as? [Any] {
+            for element in array {
+                if let found = findContinuationToken(in: element) { return found }
+            }
+        }
+        return nil
+    }
+    
+    func findAll(key: String, in container: Any) -> [Any] {
+        var results: [Any] = []
+        if let dict = container as? [String: Any] {
+            if let found = dict[key] { results.append(found) }
+            for value in dict.values { results.append(contentsOf: findAll(key: key, in: value)) }
+        } else if let array = container as? [Any] {
+            for element in array { results.append(contentsOf: findAll(key: key, in: element)) }
+        }
+        return results
+    }
+
+    func diagnoseSearchResponse(from data: Data) -> SearchResponseDiagnostics {
+        guard let json = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else {
+            return SearchResponseDiagnostics(
+                topLevelKeys: [],
+                frameworkUpdateCount: 0,
+                continuationItemCount: 0,
+                directRendererCount: 0,
+                wrapperRendererCount: 0
+            )
+        }
+
+        let keys = YouTubeSDKConstants.InternalKeys.Renderers.self
+        let frameworkUpdates = (json["frameworkUpdates"] as? [String: Any])?["entityBatchUpdate"] as? [String: Any]
+        let frameworkUpdateCount = (frameworkUpdates?["mutations"] as? [Any])?.count ?? 0
+
+        let directRendererCount =
+            findAll(key: keys.video, in: json).count +
+            findAll(key: keys.gridVideo, in: json).count +
+            findAll(key: keys.compactVideo, in: json).count +
+            findAll(key: keys.videoWithContext, in: json).count +
+            findAll(key: keys.channel, in: json).count +
+            findAll(key: keys.playlist, in: json).count +
+            findAll(key: keys.musicResponsiveListItem, in: json).count
+
+        let wrapperRendererCount =
+            findAll(key: keys.richItem, in: json).count +
+            findAll(key: keys.itemSection, in: json).count +
+            findAll(key: keys.shelf, in: json).count +
+            findAll(key: "sectionListRenderer", in: json).count +
+            findAll(key: "tabbedSearchResultsRenderer", in: json).count
+
+        let continuationItemCount =
+            findAll(key: "continuationItems", in: json).count +
+            findAll(key: "appendContinuationItemsAction", in: json).count
+
+        return SearchResponseDiagnostics(
+            topLevelKeys: Array(json.keys).sorted(),
+            frameworkUpdateCount: frameworkUpdateCount,
+            continuationItemCount: continuationItemCount,
+            directRendererCount: directRendererCount,
+            wrapperRendererCount: wrapperRendererCount
+        )
+    }
+
+    // MARK: - Generic Video Parser (For Channel/Playlist/Home)
+    func parseVideos(from data: Data) -> [YouTubeVideo] {
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return [] }
+        
+        let keys = YouTubeSDKConstants.InternalKeys.Renderers.self
+        let videos =
+            findAll(key: keys.video, in: json) +
+            findAll(key: keys.gridVideo, in: json) +
+            findAll(key: keys.compactVideo, in: json) +
+            findAll(key: keys.videoWithContext, in: json)
+        
+        return videos.compactMap { item in
+            guard let dict = item as? [String: Any] else { return nil }
+            return YouTubeVideo(from: dict)
+        }
+    }
+    
+    func parseContinuationResults(from data: Data) -> YouTubeContinuation<YouTubeItem> {
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return YouTubeContinuation(items: [], continuationToken: nil)
+        }
+        
+        var results: [YouTubeItem] = []
+        let keys = YouTubeSDKConstants.InternalKeys.Renderers.self
+        var rawVideoNodes: [Any] = []
+        rawVideoNodes.append(contentsOf: findAll(key: keys.video, in: json))
+        rawVideoNodes.append(contentsOf: findAll(key: keys.gridVideo, in: json))
+        rawVideoNodes.append(contentsOf: findAll(key: keys.compactVideo, in: json))
+        rawVideoNodes.append(contentsOf: findAll(key: keys.videoWithContext, in: json))
+        rawVideoNodes.append(contentsOf: findAll(key: keys.reelItem, in: json))
+        rawVideoNodes.append(contentsOf: findAll(key: keys.richItem, in: json))
+        rawVideoNodes.append(contentsOf: findAll(key: keys.itemSection, in: json))
+        rawVideoNodes.append(contentsOf: findAll(key: keys.shelf, in: json))
+        // Additional renderer/wrapper keys observed in some client responses
+        rawVideoNodes.append(contentsOf: findAll(key: "videoCardRenderer", in: json))
+        rawVideoNodes.append(contentsOf: findAll(key: "videoLockupRenderer", in: json))
+        rawVideoNodes.append(contentsOf: findAll(key: "videoLockup", in: json))
+        rawVideoNodes.append(contentsOf: findAll(key: "sectionListRenderer", in: json))
+        rawVideoNodes.append(contentsOf: findAll(key: "tabbedSearchResultsRenderer", in: json))
+        rawVideoNodes.append(contentsOf: findAll(key: "onResponseReceivedCommands", in: json))
+        rawVideoNodes.append(contentsOf: findAll(key: "itemWrapperRenderer", in: json))
+        // Attempt to parse any serialized template configs embedded in frameworkUpdates
+        let serializedTemplates = findAll(key: "serializedTemplateConfig", in: json)
+        for tpl in serializedTemplates {
+            guard var tplStr = tpl as? String else { continue }
+            // Percent-decode common URL-escaped payloads (many templates contain %3D etc.)
+            if let decoded = tplStr.removingPercentEncoding { tplStr = decoded }
+
+            // Try plain UTF8 JSON
+            if let tplData = tplStr.data(using: .utf8),
+               let parsed = try? JSONSerialization.jsonObject(with: tplData) {
+                rawVideoNodes.append(contentsOf: findAll(key: keys.video, in: parsed))
+                rawVideoNodes.append(contentsOf: findAll(key: "videoCardRenderer", in: parsed))
+                rawVideoNodes.append(contentsOf: extractPotentialVideoPayloads(from: parsed))
+                continue
+            }
+
+            // Try base64 -> JSON
+            if let base64Data = Data(base64Encoded: tplStr),
+               let parsed = try? JSONSerialization.jsonObject(with: base64Data) {
+                rawVideoNodes.append(contentsOf: findAll(key: keys.video, in: parsed))
+                rawVideoNodes.append(contentsOf: extractPotentialVideoPayloads(from: parsed))
+                continue
+            }
+
+            // Some templates are double-encoded: try base64 after percent-decoding
+            if let percentDecoded = tplStr.removingPercentEncoding,
+               let base64Data2 = Data(base64Encoded: percentDecoded),
+               let parsed2 = try? JSONSerialization.jsonObject(with: base64Data2) {
+                rawVideoNodes.append(contentsOf: findAll(key: keys.video, in: parsed2))
+                rawVideoNodes.append(contentsOf: extractPotentialVideoPayloads(from: parsed2))
+            }
+        }
+        let videos = rawVideoNodes.flatMap { extractPotentialVideoPayloads(from: $0) }
+        let channels = findAll(key: keys.channel, in: json)
+        let playlists = findAll(key: keys.playlist, in: json)
+        let songs = findAll(key: keys.musicResponsiveListItem, in: json)
+        let shelves = findAll(key: keys.musicShelf, in: json)
+        let carousels = findAll(key: keys.musicCarouselShelf, in: json)
+        
+        var seenVideoIds = Set<String>()
+        videos.forEach { dict in
+            if let video = YouTubeVideo(from: dict),
+               seenVideoIds.insert(video.id).inserted {
+                results.append(.video(video))
+            }
+        }
+        
+        channels.forEach { item in
+            if let dict = item as? [String: Any], let channel = YouTubeChannel(from: dict) {
+                results.append(.channel(channel))
+            }
+        }
+        
+        playlists.forEach { item in
+            if let dict = item as? [String: Any], let playlist = YouTubePlaylist(from: dict) {
+                results.append(.playlist(playlist))
+            }
+        }
+        
+        songs.forEach { item in
+            if let dict = item as? [String: Any], let song = YouTubeMusicSong(from: dict) {
+                results.append(.song(song))
+            }
+        }
+        
+        (shelves + carousels).forEach { item in
+            if let dict = item as? [String: Any], let title = (dict["title"] as? [String: Any])?["simpleText"] as? String {
+                results.append(.shelf(YouTubeShelf(title: title, items: [])))
+            }
+        }
+        
+        let token = findContinuationToken(in: json)
+        
+        return YouTubeContinuation(items: results, continuationToken: token)
+    }
+}
+
+// MARK: - Helper Methods
+
+/// Extracts video-like payload dictionaries from nested wrappers such as
+/// richItemRenderer/itemSectionRenderer/shelfRenderer/content arrays.
+func extractPotentialVideoPayloads(from container: Any) -> [[String: Any]] {
+    var out: [[String: Any]] = []
+    
+    if let dict = container as? [String: Any] {
+        let keys = YouTubeSDKConstants.InternalKeys.Renderers.self
+        let directKeys = [
+            keys.video,
+            keys.gridVideo,
+            keys.compactVideo,
+            keys.videoWithContext,
+            keys.reelItem
+        ]
+        let extraDirect = [
+            "videoCardRenderer",
+            "videoLockupRenderer",
+            "videoLockup",
+            "video_model",
+            "video_model_renderer"
+        ]
+        
+        for key in directKeys {
+            if let payload = dict[key] as? [String: Any] {
+                out.append(payload)
+            }
+        }
+        for key in extraDirect {
+            if let payload = dict[key] as? [String: Any] {
+                out.append(payload)
+            }
+        }
+        
+        // If this dictionary itself is already a video-like payload.
+        if dict["videoId"] as? String != nil {
+            out.append(dict)
+        }
+        
+        if let content = dict["content"] {
+            out.append(contentsOf: extractPotentialVideoPayloads(from: content))
+        }
+        if let contents = dict["contents"] {
+            out.append(contentsOf: extractPotentialVideoPayloads(from: contents))
+        }
+        if let items = dict["items"] {
+            out.append(contentsOf: extractPotentialVideoPayloads(from: items))
+        }
+    } else if let array = container as? [Any] {
+        for element in array {
+            out.append(contentsOf: extractPotentialVideoPayloads(from: element))
+        }
+    }
+    
+    return out
+}
+
+
+
+================================================
+FILE: Sources/YouTubeSDK/YouTube/YouTubeClient+Playlists.swift
+================================================
+//
+//  YouTubeClient+Playlists.swift
+//  YouTubeSDK
+//
+//  Created by Aarav Gupta on 13/03/26.
+//
+
+import Foundation
+
+extension YouTubeClient {
+    
+    /// Creates a new playlist.
+    /// - Parameters:
+    ///   - title: The title of the playlist.
+    ///   - description: Optional description.
+    ///   - privacy: Privacy status ("PUBLIC", "UNLISTED", or "PRIVATE").
+    public func createPlaylist(title: String, description: String? = nil, privacy: String = "PRIVATE") async throws -> String {
+        var body: [String: Any] = [
+            "title": title,
+            "privacyStatus": privacy
+        ]
+        if let description = description {
+            body["description"] = description
+        }
+        
+        let data = try await network.sendComplexRequest("playlist/create", body: body)
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let playlistId = json["playlistId"] as? String else {
+            throw YouTubeError.apiError(message: "Failed to create playlist or extract ID")
+        }
+        return playlistId
+    }
+    
+    /// Deletes a playlist by its ID.
+    public func deletePlaylist(id: String) async throws {
+        let body = ["playlistId": id]
+        let _ = try await network.sendComplexRequest("playlist/delete", body: body)
+    }
+    
+    /// Adds a video to a specific playlist.
+    public func addVideoToPlaylist(videoId: String, playlistId: String) async throws {
+        let body: [String: Any] = [
+            "playlistId": playlistId,
+            "actions": [
+                ["action": "ACTION_ADD_VIDEO", "addedVideoId": videoId]
+            ]
+        ]
+        let _ = try await network.sendComplexRequest("browse/edit_playlist", body: body)
+    }
+    
+    /// Removes a video from a specific playlist.
+    public func removeVideoFromPlaylist(videoId: String, playlistId: String) async throws {
+        // First we need to find the setVideoId (the unique ID of the video WITHIN the playlist)
+        // This is simplified; usually we'd need the setVideoId from the playlist items results
+        let body: [String: Any] = [
+            "playlistId": playlistId,
+            "actions": [
+                ["action": "ACTION_REMOVE_VIDEO_BY_VIDEO_ID", "removedVideoId": videoId]
+            ]
+        ]
+        let _ = try await network.sendComplexRequest("browse/edit_playlist", body: body)
+    }
+}
+
+
+
+================================================
+FILE: Sources/YouTubeSDK/YouTube/YouTubeClient+Social.swift
+================================================
+//
+//  YouTubeClient+Social.swift
+//  YouTubeSDK
+//
+//  Created by Aarav Gupta on 13/03/26.
+//
+
+import Foundation
+
+extension YouTubeClient {
+    
+    // MARK: - Interactions
+    
+    /// Likes a video.
+    public func like(videoId: String) async throws {
+        let body: [String: Any] = [
+            "target": ["videoId": videoId]
+        ]
+        _ = try await network.sendComplexRequest("like/like", body: body)
+    }
+    
+    /// Removes a like from a video.
+    public func removeLike(videoId: String) async throws {
+        let body: [String: Any] = [
+            "target": ["videoId": videoId]
+        ]
+        _ = try await network.sendComplexRequest("like/removelike", body: body)
+    }
+    
+    /// Dislikes a video.
+    public func dislike(videoId: String) async throws {
+        let body: [String: Any] = [
+            "target": ["videoId": videoId]
+        ]
+        _ = try await network.sendComplexRequest("like/dislike", body: body)
+    }
+    
+    /// Subscribes to a channel.
+    public func subscribe(channelId: String) async throws {
+        let body: [String: Any] = [
+            "channelIds": [channelId]
+        ]
+        _ = try await network.sendComplexRequest("subscription/subscribe", body: body)
+    }
+    
+    /// Unsubscribes from a channel.
+    public func unsubscribe(channelId: String) async throws {
+        let body: [String: Any] = [
+            "channelIds": [channelId]
+        ]
+        _ = try await network.sendComplexRequest("subscription/unsubscribe", body: body)
+    }
+
+    /// Fetches the "Guide" data, which contains the user's sidebar, library categories, and subs.
+    public func getGuide() async throws -> [String: Any] {
+        let data = try await network.sendComplexRequest("guide", body: [:])
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            throw YouTubeError.parsingError(details: "Could not parse Guide response")
+        }
+        return json
+    }
+}
+
+
+
+================================================
+FILE: Sources/YouTubeSDK/YouTube/YouTubeClient.swift
+================================================
+//
+//  YouTubeClient.swift
+//  YouTubeSDK
+//
+//  Created by Aarav Gupta on 26/12/25.
+//
+
+import Foundation
+
+public actor YouTubeClient {
+    let network: NetworkClient
+    let webSearchNetwork: NetworkClient
+    let cookies: String?
+    
+    /// Initializes the Client.
+    /// - Parameter cookies: Optional "Cookie" header string. If provided, requests will be authenticated.
+    public init(cookies: String? = nil) {
+        self.cookies = cookies
+        let context = InnerTubeContext(client: ClientConfig.ios, cookies: cookies)
+        let webContext = InnerTubeContext(client: ClientConfig.web, cookies: cookies)
+        self.network = NetworkClient(context: context)
+        self.webSearchNetwork = NetworkClient(context: webContext)
+    }
+
+    // MARK: - Browsing
+    
+    public func getHome(
+        regionCode: String? = nil,
+        languageCode: String? = nil,
+        musicOnly: Bool = false
+    ) async throws -> YouTubeContinuation<YouTubeItem> {
+        let searchNetwork = makeWebSearchNetwork(regionCode: regionCode, languageCode: languageCode)
+
+        // Home parsing is tuned to WEB browse payloads (rich wrappers and continuation shape).
+        let data = try await searchNetwork.get("browse", body: ["browseId": YouTubeSDKConstants.InternalKeys.BrowseIDs.home])
+        var parsedHome = parseContinuationResults(from: data)
+        if musicOnly {
+            parsedHome = filteredMusicContinuation(parsedHome)
+        }
+        if !parsedHome.items.isEmpty {
+            return parsedHome
+        }
+
+        // Logged-out/low-history accounts can receive a feed nudge with no items.
+        // Fall back so client UIs are not left completely empty.
+        let fallbackQuery = makeRegionalMusicFallbackQuery(regionCode: regionCode)
+        if let searchFallbackData = try? await searchNetwork.get("search", body: ["query": fallbackQuery]) {
+            var parsedSearchFallback = parseContinuationResults(from: searchFallbackData)
+            if musicOnly {
+                parsedSearchFallback = filteredMusicContinuation(parsedSearchFallback)
+            }
+            if !parsedSearchFallback.items.isEmpty {
+                return parsedSearchFallback
+            }
+        }
+
+        if let trendingVideos = try? await getTrending(), !trendingVideos.isEmpty {
+            var trendingFallback = YouTubeContinuation(
+                items: trendingVideos.map { YouTubeItem.video($0) },
+                continuationToken: nil
+            )
+
+            if musicOnly {
+                trendingFallback = filteredMusicContinuation(trendingFallback)
+            }
+
+            if !trendingFallback.items.isEmpty {
+                return trendingFallback
+            }
+        }
+
+        return parsedHome
+    }
+    
+    public func getTrending() async throws -> [YouTubeVideo] {
+        let data = try await network.get("browse", body: ["browseId": YouTubeSDKConstants.InternalKeys.BrowseIDs.trending])
+        return await parseVideos(from: data)
+    }
+    
+    public func getChannelVideos(channelId: String) async throws -> [YouTubeVideo] {
+        let data = try await network.get("browse", body: ["browseId": channelId, "params": "EgZ2aWRlb3M%3D"])
+        return await parseVideos(from: data)
+    }
+    
+    public func getPlaylist(id: String) async throws -> YouTubeContinuation<YouTubeVideo> {
+        let browseId = id.hasPrefix("PL") ? "VL\(id)" : id
+        let data = try await network.get("browse", body: ["browseId": browseId])
+        
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { 
+            throw YouTubeError.parsingError(details: "Invalid JSON response for playlist")
+        }
+        
+        let videosRaw = await findAll(key: YouTubeSDKConstants.InternalKeys.Renderers.playlistVideo, in: json)
+        let videos = videosRaw.compactMap { item -> YouTubeVideo? in
+            guard let dict = item as? [String: Any] else { return nil }
+            return YouTubeVideo(from: dict)
+        }
+        
+        let token = await findContinuationToken(in: json)
+        return YouTubeContinuation(items: videos, continuationToken: token)
+    }
+
+    public func search(_ query: String) async throws -> YouTubeContinuation<YouTubeItem> {
+        let data = try await webSearchNetwork.get("search", body: ["query": query])
+//        let diagnostics = diagnoseSearchResponse(from: data)
+//        print("yt_search_diagnostics client=WEB \(diagnostics.summary)")
+//        writeSearchDebugDump(data, clientName: "web")
+
+        return parseContinuationResults(from: data)
+    }
+
+//    public func writeSearchDebugDump(_ data: Data, clientName: String) {
+//        let timestamp = Int(Date().timeIntervalSince1970)
+//        let tempFile = "yt_search_debug_\(clientName)_\(timestamp).json"
+//        let tempURL = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(tempFile)
+//
+//        guard let jsonObject = try? JSONSerialization.jsonObject(with: data),
+//              let debugData = try? JSONSerialization.data(withJSONObject: jsonObject, options: .prettyPrinted) else {
+//            return
+//        }
+//
+//        try? debugData.write(to: tempURL, options: .atomic)
+//        print("yt_search_debug client=\(clientName) saved=\(tempURL.path)")
+//    }
+
+    /// Fetches the full video details, including Streaming URLs (HLS).
+    public func video(id: String) async throws -> YouTubeVideo {
+        let data = try await network.get("player", body: ["videoId": id])
+        let decoder = JSONDecoder()
+        var video = try decoder.decode(YouTubeVideo.self, from: data)
+        
+        if video.requiresDeciphering {
+            if var streamingData = video.streamingData {
+                var newFormats: [Stream] = []
+                for var stream in streamingData.adaptiveFormats {
+                    if let cipher = stream.signatureCipher {
+                        do {
+                            let decryptedURL = try await Cipher.shared.decipher(url: stream.url ?? "", signatureCipher: cipher, network: network)
+                            stream.url = decryptedURL.absoluteString
+                            stream.signatureCipher = nil
+                        } catch {
+                            print("⚠️ Failed to decipher stream: \(error)")
+                        }
+                    }
+                    newFormats.append(stream)
+                }
+                streamingData.adaptiveFormats = newFormats
+                video.streamingData = streamingData
+            }
+        }
+        return video
+    }
+
+    /// Fetches search suggestions for Main YouTube using an external suggest endpoint.
+    /// - Parameter query: The search term.
+    /// - Returns: A list of suggested search terms.
+    public func getSearchSuggestions(query: String, baseURL: String = YouTubeSDKConstants.URLS.API.youtubeSuggestionsURL) async throws -> [String] {
+        guard let url = URL(string: baseURL) else { throw URLError(.badURL) }
+        var components = URLComponents(url: url.appendingPathComponent("search"), resolvingAgainstBaseURL: true)
+        components?.queryItems = [
+            URLQueryItem(name: "ds", value: "yt"),
+            URLQueryItem(name: "client", value: "youtube"),
+            URLQueryItem(name: "q", value: query)
+        ]
+        
+        guard let url = components?.url else { return [] }
+        
+        let (data, _) = try await URLSession.shared.data(from: url)
+        guard let responseString = String(data: data, encoding: .utf8) else { return [] }
+        
+        // The response is JSONP: window.google.ac.h(["query", [["suggestion", ...]]])
+        guard let startBracket = responseString.firstIndex(of: "["),
+              let endBracket = responseString.lastIndex(of: "]") else {
+            return []
+        }
+        
+        let jsonString = String(responseString[startBracket...endBracket])
+        guard let jsonArray = try? JSONSerialization.jsonObject(with: Data(jsonString.utf8)) as? [Any],
+              jsonArray.count > 1,
+              let suggestionsArray = jsonArray[1] as? [[Any]] else {
+            return []
+        }
+        
+        return suggestionsArray.compactMap { $0.first as? String }
+    }
+    
+    /// Fetches an AI-powered summary of the video (if available).
+    public func getVideoSummary(videoId: String) async throws -> YouTubeAISummary {
+        let body: [String: String] = [
+            "videoId": videoId,
+            "engagementPanelType": "ENGAGEMENT_PANEL_TYPE_YOU_CHAT"
+        ]
+        let data = try await network.get("get_panel", body: body)
+        
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let summary = YouTubeAISummary(from: json) else {
+            throw YouTubeError.apiError(message: "AI Summary not available for this video.")
+        }
+        return summary
+    }
+}
+
+extension YouTubeClient {
+    func filteredMusicContinuation(_ continuation: YouTubeContinuation<YouTubeItem>) -> YouTubeContinuation<YouTubeItem> {
+        let filteredItems = continuation.items.filter { shouldKeepMusicHomeItem($0) }
+        return YouTubeContinuation(items: filteredItems, continuationToken: continuation.continuationToken)
+    }
+
+    func makeWebSearchNetwork(regionCode: String?, languageCode: String?) -> NetworkClient {
+        guard let normalizedRegion = normalizedRegionCode(regionCode) else {
+            return webSearchNetwork
+        }
+
+        let normalizedLanguage = normalizedLanguageCode(languageCode)
+        let context = InnerTubeContext(
+            client: ClientConfig.web,
+            cookies: cookies,
+            gl: normalizedRegion,
+            hl: normalizedLanguage
+        )
+        return NetworkClient(context: context)
+    }
+
+    nonisolated func shouldKeepMusicHomeItem(_ item: YouTubeItem) -> Bool {
+        switch item {
+        case .song:
+            return true
+        case .playlist(let playlist):
+            return isLikelyMusicMetadata(title: playlist.title, secondaryText: playlist.author)
+        case .video(let video):
+            return isLikelyMusicMetadata(title: video.title, secondaryText: video.author)
+        case .channel(let channel):
+            return isLikelyArtistChannelName(channel.title)
+        case .shelf(let shelf):
+            return isLikelyMusicMetadata(title: shelf.title, secondaryText: nil)
+        }
+    }
+
+    nonisolated func makeRegionalMusicFallbackQuery(regionCode: String?) -> String {
+        if let normalizedRegion = normalizedRegionCode(regionCode) {
+            return "top music videos \(normalizedRegion)"
+        }
+        return "top music videos"
+    }
+
+    nonisolated func normalizedRegionCode(_ rawRegionCode: String?) -> String? {
+        guard let raw = rawRegionCode?.trimmingCharacters(in: .whitespacesAndNewlines), !raw.isEmpty else {
+            return nil
+        }
+        let uppercased = raw.uppercased()
+        guard uppercased.count == 2 else { return nil }
+        return uppercased
+    }
+
+    nonisolated func normalizedLanguageCode(_ rawLanguageCode: String?) -> String {
+        guard let raw = rawLanguageCode?.trimmingCharacters(in: .whitespacesAndNewlines), !raw.isEmpty else {
+            return "en"
+        }
+
+        if let separator = raw.firstIndex(where: { $0 == "-" || $0 == "_" }) {
+            return String(raw[..<separator]).lowercased()
+        }
+
+        return raw.lowercased()
+    }
+
+    nonisolated func isLikelyArtistChannelName(_ channelName: String) -> Bool {
+        let normalized = channelName.lowercased()
+        let trustedSignals = [
+            "official artist channel",
+            "- topic",
+            "vevo",
+            "records",
+            "music",
+            "band",
+            "orchestra"
+        ]
+        return trustedSignals.contains { normalized.contains($0) }
+    }
+
+    nonisolated func isLikelyMusicMetadata(title: String, secondaryText: String?) -> Bool {
+        let normalizedTitle = title.lowercased()
+        let normalizedSecondary = secondaryText?.lowercased() ?? ""
+        let merged = "\(normalizedTitle) \(normalizedSecondary)"
+
+        let blockedSignals = [
+            "#shorts",
+            "/shorts/",
+            "tutorial",
+            "gameplay",
+            "gaming",
+            "reaction",
+            "review",
+            "podcast",
+            "interview"
+        ]
+        if blockedSignals.contains(where: { merged.contains($0) }) {
+            return false
+        }
+
+        let positiveSignals = [
+            "official music video",
+            "official video",
+            "official audio",
+            "lyric",
+            "lyrics",
+            "visualizer",
+            "audio",
+            "song",
+            "album",
+            "single",
+            "remix",
+            "acoustic",
+            "feat.",
+            "ft.",
+            "vevo",
+            "topic"
+        ]
+
+        if positiveSignals.contains(where: { merged.contains($0) }) {
+            return true
+        }
+
+        return isLikelyArtistChannelName(secondaryText ?? "")
+    }
+}
+
+
+
+================================================
+FILE: Sources/YouTubeSDK/YouTube/Models/Stream.swift
+================================================
+//
+//  Stream.swift
+//  YouTubeSDK
+//
+//  Created by Aarav Gupta on 30/12/25.
+//
+
+import Foundation
+
+public struct Stream: Decodable, Sendable {
+    public var url: String? // Direct URL (if available)
+    public let itag: Int
+    public let mimeType: String
+    public let bitrate: Int
+    public let width: Int?
+    public let height: Int?
+    public let contentLength: String?
+    public let qualityLabel: String? // e.g., "1080p", "720p"
+    public let audioQuality: String? // e.g., "AUDIO_QUALITY_MEDIUM"
+    public let approxDurationMs: String?
+    public var signatureCipher: String? // Encrypted signature
+    
+    // Helpers
+    public var isAudioOnly: Bool {
+        return mimeType.starts(with: "audio")
+    }
+    
+    public var isVideoOnly: Bool {
+        return mimeType.starts(with: "video") && (audioQuality == nil)
+    }
+}
+
+public struct StreamingData: Decodable, Sendable {
+    public let expiresInSeconds: String?
+    public let formats: [Stream]         // Muxed (Video + Audio)
+    public var adaptiveFormats: [Stream] // Separate tracks
+    public let hlsManifestUrl: String?   // The golden ticket for iOS AVPlayer
+    
+    enum CodingKeys: String, CodingKey {
+        case expiresInSeconds
+        case formats
+        case adaptiveFormats
+        case hlsManifestUrl
+    }
+    
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        // decodeIfPresent returns nil if key is missing.
+        // We use '?? []' to default to an empty list so your code doesn't crash.
+        self.formats = try container.decodeIfPresent([Stream].self, forKey: .formats) ?? []
+        self.adaptiveFormats = try container.decodeIfPresent([Stream].self, forKey: .adaptiveFormats) ?? []
+        
+        self.expiresInSeconds = try container.decodeIfPresent(String.self, forKey: .expiresInSeconds)
+        self.hlsManifestUrl = try container.decodeIfPresent(String.self, forKey: .hlsManifestUrl)
+    }
+}
+
+
+
+================================================
+FILE: Sources/YouTubeSDK/YouTube/Models/YouTubeAISummary.swift
+================================================
+//
+//  YouTubeAISummary.swift
+//  YouTubeSDK
+//
+//  Created by Aarav Gupta on 13/03/26.
+//
+
+import Foundation
+
+public struct YouTubeAISummary: Sendable {
+    public let text: String
+    public let highlights: [Highlight]
+    
+    public struct Highlight: Sendable {
+        public let text: String
+        public let startTimeSeconds: Int
+        public let startIndex: Int
+        public let length: Int
+    }
+    
+    init?(from json: [String: Any]) {
+        // Path: onResponseReceivedCommand.listMutationCommand.operations[0].insertItemSectionContent.contents[0].youChatItemViewModel
+        guard let response = json["onResponseReceivedCommand"] as? [String: Any],
+              let listMutation = response["listMutationCommand"] as? [String: Any],
+              let operations = listMutation["operations"] as? [String: Any],
+              let opsArray = operations["operations"] as? [[String: Any]],
+              let firstOp = opsArray.first,
+              let insert = firstOp["insertItemSectionContent"] as? [String: Any],
+              let contents = insert["contents"] as? [[String: Any]],
+              let viewModel = contents.first?["youChatItemViewModel"] as? [String: Any],
+              let textDict = viewModel["text"] as? [String: Any],
+              let content = textDict["content"] as? String else {
+            return nil
+        }
+        
+        self.text = content
+        
+        var highlights: [Highlight] = []
+        if let runs = textDict["commandRuns"] as? [[String: Any]] {
+            for run in runs {
+                if let startIndex = run["startIndex"] as? Int,
+                   let length = run["length"] as? Int,
+                   let onTap = run["onTap"] as? [String: Any],
+                   let innertubeCommand = onTap["innertubeCommand"] as? [String: Any],
+                   let watchEndpoint = innertubeCommand["watchEndpoint"] as? [String: Any],
+                   let startTime = watchEndpoint["startTimeSeconds"] as? Int {
+                    
+                    let rangeStart = content.index(content.startIndex, offsetBy: startIndex)
+                    let rangeEnd = content.index(rangeStart, offsetBy: length)
+                    let highlightText = String(content[rangeStart..<rangeEnd])
+                    
+                    highlights.append(Highlight(
+                        text: highlightText,
+                        startTimeSeconds: startTime,
+                        startIndex: startIndex,
+                        length: length
+                    ))
+                }
+            }
+        }
+        self.highlights = highlights
+    }
+}
+
+
+
+================================================
+FILE: Sources/YouTubeSDK/YouTube/Models/YouTubeChannel.swift
+================================================
+//
+//  YouTubeChannel.swift
+//  YouTubeSDK
+//
+//  Created by Aarav Gupta on 31/12/25.
+//
+
+
+import Foundation
+
+public struct YouTubeChannel: Identifiable, Sendable {
+    public let id: String
+    public let title: String
+    public let thumbnailURL: URL?
+    public let subscriberCount: String?
+    public let videoCount: String?
+    
+    init?(from data: [String: Any]) {
+        // Handle Search Result & Browse Header
+        guard let id = data["channelId"] as? String ?? data["browseId"] as? String else { return nil }
+        self.id = id
+        
+        // Title
+        if let title = data["title"] as? [String: Any],
+           let simple = title["simpleText"] as? String {
+            self.title = simple
+        } else if let title = data["title"] as? [String: Any],
+                  let runs = title["runs"] as? [[String: Any]],
+                  let text = runs.first?["text"] as? String {
+            self.title = text
+        } else {
+            self.title = (data["title"] as? String) ?? "Unknown Channel"
+        }
+        
+        // Thumbnail
+        if let thumbs = (data["thumbnail"] ?? data["avatar"]) as? [String: Any],
+           let list = thumbs["thumbnails"] as? [[String: Any]],
+           let url = list.last?["url"] as? String {
+            self.thumbnailURL = URL(string: url)
+        } else {
+            self.thumbnailURL = nil
+        }
+        
+        // Metadata
+        self.subscriberCount = (data["subscriberCountText"] as? [String: Any])?["simpleText"] as? String
+        self.videoCount = (data["videoCountText"] as? [String: Any])?["simpleText"] as? String
+    }
+}
+
+
+================================================
+FILE: Sources/YouTubeSDK/YouTube/Models/YouTubeContinuation.swift
+================================================
+//
+//  YouTubeContinuation.swift
+//  YouTubeSDK
+//
+//  Created by Aarav Gupta on 13/03/26.
+//
+
+import Foundation
+
+public struct YouTubeContinuation<T: Sendable>: Sendable {
+    public let items: [T]
+    public let continuationToken: String?
+    
+    public init(items: [T], continuationToken: String?) {
+        self.items = items
+        self.continuationToken = continuationToken
+    }
+}
+
+
+
+================================================
+FILE: Sources/YouTubeSDK/YouTube/Models/YouTubeItem.swift
+================================================
+//
+//  YouTubeItem.swift
+//  YouTubeSDK
+//
+//  Created by Aarav Gupta on 13/03/26.
+//
+
+import Foundation
+
+public enum YouTubeItem: Sendable {
+    case video(YouTubeVideo)
+    case song(YouTubeMusicSong)
+    case playlist(YouTubePlaylist)
+    case channel(YouTubeChannel)
+    case shelf(YouTubeShelf)
+}
+
+public struct YouTubeShelf: Sendable {
+    public let title: String
+    public let items: [YouTubeItem]
+    
+    public init(title: String, items: [YouTubeItem]) {
+        self.title = title
+        self.items = items
+    }
+}
+
+
+
+================================================
+FILE: Sources/YouTubeSDK/YouTube/Models/YouTubePlaylist.swift
+================================================
+//
+//  YouTubePlaylist.swift
+//  YouTubeSDK
+//
+//  Created by Aarav Gupta on 31/12/25.
+//
+
+
+import Foundation
+
+public struct YouTubePlaylist: Identifiable, Sendable {
+    public let id: String
+    public let title: String
+    public let thumbnailURL: URL?
+    public let videoCount: String?
+    public let author: String?
+    
+    init?(from data: [String: Any]) {
+        guard let id = data["playlistId"] as? String else { return nil }
+        self.id = id
+        
+        if let title = data["title"] as? [String: Any],
+           let simple = title["simpleText"] as? String {
+            self.title = simple
+        } else {
+            self.title = "Unknown Playlist"
+        }
+        
+        if let thumbnails = data["thumbnails"] as? [[String: Any]],
+           let url = thumbnails.last?["url"] as? String {
+            self.thumbnailURL = URL(string: url)
+        } else {
+            self.thumbnailURL = nil
+        }
+        
+        self.videoCount = (data["videoCount"] as? String) ?? (data["videoCountText"] as? [String: Any])?["simpleText"] as? String
+        
+        if let owner = data["ownerText"] as? [String: Any],
+           let runs = owner["runs"] as? [[String: Any]],
+           let name = runs.first?["text"] as? String {
+            self.author = name
+        } else {
+            self.author = nil
+        }
+    }
+}
+
+
+================================================
+FILE: Sources/YouTubeSDK/YouTube/Models/YouTubeSearchResult.swift
+================================================
+//
+//  YouTubeSearchResult.swift
+//  YouTubeSDK
+//
+//  Created by Aarav Gupta on 31/12/25.
+//
+
+
+import Foundation
+
+public enum YouTubeSearchResult: Identifiable, Sendable {
+    case video(YouTubeVideo)
+    case channel(YouTubeChannel)
+    case playlist(YouTubePlaylist)
+    
+    public var id: String {
+        switch self {
+        case .video(let v): return v.id
+        case .channel(let c): return c.id
+        case .playlist(let p): return p.id
+        }
+    }
+}
+
+
+================================================
+FILE: Sources/YouTubeSDK/YouTube/Models/YouTubeVideo.swift
+================================================
+//
+//  YouTubeVideo.swift
+//  YouTubeSDK
+//
+//  Created by Aarav Gupta on 26/12/25.
+//
+
+import Foundation
+
+public struct YouTubeVideo: Decodable, Identifiable, Sendable {
+    public let id: String
+    public let title: String
+    public let viewCount: String
+    public let author: String
+    public let channelId: String
+    public let description: String
+    public let lengthInSeconds: String
+    public let thumbnailURL: String?
+    
+    // The new Stream Data
+    public var streamingData: StreamingData?
+    
+    public let captions: [CaptionTrack]?
+    
+    enum CodingKeys: String, CodingKey {
+        case videoDetails
+        case streamingData
+    }
+    
+    enum VideoDetailsKeys: String, CodingKey {
+        case videoId, title, viewCount, author, channelId
+        case shortDescription, thumbnail
+        case lengthInSeconds = "lengthSeconds"
+    }
+    
+    enum ThumbnailKeys: String, CodingKey {
+        case thumbnails
+    }
+    
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        // 1. Decode Details
+        let details = try container.nestedContainer(keyedBy: VideoDetailsKeys.self, forKey: .videoDetails)
+        self.id = try details.decode(String.self, forKey: .videoId)
+        self.title = try details.decode(String.self, forKey: .title)
+        self.viewCount = try details.decode(String.self, forKey: .viewCount)
+        self.author = try details.decode(String.self, forKey: .author)
+        self.channelId = try details.decode(String.self, forKey: .channelId)
+        self.description = try details.decodeIfPresent(String.self, forKey: .shortDescription) ?? ""
+        self.lengthInSeconds = try details.decodeIfPresent(String.self, forKey: .lengthInSeconds) ?? "0"
+        
+        // Thumbnail parsing
+        if let thumbContainer = try? details.nestedContainer(keyedBy: ThumbnailKeys.self, forKey: .thumbnail),
+           let thumbs = try? thumbContainer.decode([Thumbnail].self, forKey: .thumbnails) {
+            self.thumbnailURL = thumbs.last?.url // Get the largest one
+        } else {
+            self.thumbnailURL = nil
+        }
+        
+        // 2. Decode Streams
+        self.streamingData = try container.decodeIfPresent(StreamingData.self, forKey: .streamingData)
+        
+        // Manual Parsing for Captions (Nested deep in playerCaptionsTracklistRenderer)
+        // Usually found in the root dictionary, not videoDetails.
+        // Since we are inside a specific container structure, we might need a manual init or helper.
+        // For simplicity, let's assume we parse it manually in the Client or use optional chaining in init(from data).
+        
+        self.captions = nil
+    }
+    
+    /// Returns the HLS URL if available (Best for AVPlayer).
+    public var hlsURL: URL? {
+        guard let urlString = streamingData?.hlsManifestUrl else { return nil }
+        return URL(string: urlString)
+    }
+    
+    /// Returns the highest quality audio-only stream (m4a/opus).
+    public var bestAudioStream: Stream? {
+        return streamingData?.adaptiveFormats
+            .filter { $0.isAudioOnly }
+            .sorted { $0.bitrate > $1.bitrate } // Highest bitrate first
+            .first
+    }
+    
+    /// Returns the best muxed video (Video + Audio combined).
+    /// usually capped at 720p by YouTube, but easiest to play.
+    public var bestMuxedStream: Stream? {
+        return streamingData?.formats
+            .sorted { ($0.height ?? 0) > ($1.height ?? 0) }
+            .first
+    }
+}
+
+// Simple Helper for Thumbnails
+private struct Thumbnail: Decodable {
+    let url: String
+    let width: Int
+    let height: Int
+}
+
+public struct CaptionTrack: Decodable, Sendable {
+    public let baseUrl: String
+    public let name: String
+    public let languageCode: String
+}
+
+public extension YouTubeVideo {
+    /// Manual Initializer for Search Results (videoRenderer)
+    init?(from data: [String: Any]) {
+        guard let id = data["videoId"] as? String else { return nil }
+        self.id = id
+        
+        // Title
+        if let titleData = data["title"] as? [String: Any],
+           let runs = titleData["runs"] as? [[String: Any]],
+           let text = runs.first?["text"] as? String {
+            self.title = text
+        } else if let simple = (data["title"] as? [String: Any])?["simpleText"] as? String {
+            self.title = simple
+        } else {
+            self.title = "Unknown"
+        }
+        
+        // View Count
+        if let viewData = data["viewCountText"] as? [String: Any],
+           let simple = viewData["simpleText"] as? String {
+            self.viewCount = simple
+        } else if let shortViewData = data["shortViewCountText"] as? [String: Any],
+                  let simple = shortViewData["simpleText"] as? String {
+            self.viewCount = simple
+        } else {
+            self.viewCount = "0"
+        }
+        
+        // Author/Channel (ownerText for standard videoRenderer, byline for compact/videoWithContext)
+        let bylineRuns =
+            (data["ownerText"] as? [String: Any])?["runs"] as? [[String: Any]] ??
+            (data["longBylineText"] as? [String: Any])?["runs"] as? [[String: Any]] ??
+            (data["shortBylineText"] as? [String: Any])?["runs"] as? [[String: Any]]
+        
+        if let runs = bylineRuns,
+           let name = runs.first?["text"] as? String {
+             self.author = name
+             let nav = runs.first?["navigationEndpoint"] as? [String: Any]
+             self.channelId = (nav?["browseEndpoint"] as? [String: Any])?["browseId"] as? String ?? ""
+         } else {
+             self.author = "Unknown"
+             self.channelId = ""
+         }
+        
+        // Thumbnail
+        if let thumbDetails = data["thumbnail"] as? [String: Any],
+           let thumbs = thumbDetails["thumbnails"] as? [[String: Any]],
+           let url = thumbs.last?["url"] as? String {
+            self.thumbnailURL = url
+        } else {
+            self.thumbnailURL = nil
+        }
+        
+        // Length
+        if let lengthData = data["lengthText"] as? [String: Any],
+           let simple = lengthData["simpleText"] as? String {
+            self.lengthInSeconds = simple // Keep as string "3:45"
+        } else {
+            self.lengthInSeconds = ""
+        }
+        
+        self.description = ""
+        self.streamingData = nil // Search results don't have streams
+        
+        // Extract Captions
+        var tracks: [CaptionTrack] = []
+        if let captionsData = data["captions"] as? [String: Any],
+           let playerCaptions = captionsData["playerCaptionsTracklistRenderer"] as? [String: Any],
+           let trackList = playerCaptions["captionTracks"] as? [[String: Any]] {
+            
+            for track in trackList {
+                if let url = track["baseUrl"] as? String,
+                   let nameData = track["name"] as? [String: Any],
+                   let name = (nameData["simpleText"] as? String) ?? (nameData["runs"] as? [[String: Any]])?.first?["text"] as? String,
+                   let lang = track["languageCode"] as? String {
+                    tracks.append(CaptionTrack(baseUrl: url, name: name, languageCode: lang))
+                }
+            }
+        }
+        self.captions = tracks
+    }
+}
+
+public extension YouTubeVideo {
+    var requiresDeciphering: Bool {
+        // If we have no HLS and the best streams have no URL but have a cipher
+        guard hlsURL == nil else { return false }
+        return streamingData?.adaptiveFormats.first?.url == nil && streamingData?.adaptiveFormats.first?.signatureCipher != nil
+    }
+}
+
+
+
+================================================
+FILE: Sources/YouTubeSDK/YouTubeAVPlayer/YouTubeAVPlayer.swift
+================================================
+//
+//  YouTubeAVPlayer.swift
+//  YouTubeSDK
+//
+//  Created by Aarav Gupta on 01/01/26.
+//
+
+import AVKit
+import Combine
+import SwiftUI
+
+/// A smart AVPlayer that knows how to load YouTube videos directly.
+@MainActor
+public class YouTubeAVPlayer: AVPlayer, ObservableObject {
+    
+    // MARK: - Published State
+    @Published public var isLoading: Bool = false
+    @Published public var currentVideo: YouTubeVideo?
+    @Published public var playbackError: String?
+    
+    // MARK: - Configuration
+    private let client: YouTubeClient
+    
+    public init(client: YouTubeClient = YouTubeClient()) {
+        self.client = client
+        super.init()
+        setupAudioSession()
+    }
+    
+    public func load(videoId: String, preferAudio: Bool = false) {
+        self.isLoading = true
+        self.playbackError = nil
+        
+        Task {
+            do {
+                let video = try await client.video(id: videoId)
+                
+                self.currentVideo = video
+                
+                if let streamURL = self.selectBestStream(for: video, preferAudio: preferAudio) {
+                    print("▶️ Loading Stream: \(streamURL)")
+                    let item = AVPlayerItem(url: streamURL)
+                    self.replaceCurrentItem(with: item)
+                    self.play()
+                } else {
+                    self.playbackError = "No playable stream found."
+                }
+                self.isLoading = false
+            } catch {
+                print("❌ YouTubePlayer Error: \(error)")
+                self.playbackError = error.localizedDescription
+                self.isLoading = false
+            }
+        }
+    }
+    
+    // MARK: - Helpers
+    
+    private func selectBestStream(for video: YouTubeVideo, preferAudio: Bool) -> URL? {
+        // Option A: HLS (Always best for video, handles switching automatically)
+        if !preferAudio, let hls = video.hlsURL {
+            return hls
+        }
+        
+        // Option B: Audio Only (For music mode)
+        if preferAudio, let audio = video.bestAudioStream?.url {
+            return URL(string: audio)
+        }
+        
+        // Option C: Legacy / Fallback
+        if let muxed = video.bestMuxedStream?.url {
+            return URL(string: muxed)
+        }
+        
+        return nil
+    }
+    
+    // MARK: - Audio Session (CRITICAL FIX)
+    #if os(iOS)
+    private func setupAudioSession() {
+        do {
+            let session = AVAudioSession.sharedInstance()
+            // .playback is required for background audio and playing while silent switch is on
+            try session.setCategory(.playback, mode: .default)
+            try session.setActive(true)
+        } catch {
+            print("❌ Failed to set up Audio Session: \(error)")
+        }
+    }
+    #elseif os(macOS)
+    private func setupAudioSession() {
+        
+    }
+    #endif
+}
+
+
+
+================================================
+FILE: Sources/YouTubeSDK/YouTubeCharts/YouTubeChartsClient.swift
+================================================
+//
+//  YouTubeChartsClient.swift
+//  YouTubeSDK
+//
+//  Created by Aarav Gupta on 26/12/25.
+//
+
+import Foundation
+
+public actor YouTubeChartsClient {
+    
+    private let analyticsNetwork: NetworkClient
+    private let musicNetwork: NetworkClient
+    
+    public init() {
+        let analyticsContext = InnerTubeContext(client: ClientConfig.webMusicAnalytics)
+        self.analyticsNetwork = NetworkClient(
+            context: analyticsContext,
+            baseURL: YouTubeSDKConstants.URLS.API.youtubeChartsInnerTubeURL
+        )
+
+        let musicContext = InnerTubeContext(client: ClientConfig.webRemix)
+        self.musicNetwork = NetworkClient(context: musicContext, baseURL: YouTubeSDKConstants.URLS.API.youtubeMusicInnerTubeURL)
+    }
+    
+    // MARK: - Global & Local Charts
+    
+    /// Top Songs Chart
+    /// - Parameter country: ISO 3166-1 alpha-2 code (e.g., "US", "IN", "JP", "ZZ" for Global)
+    public func getTopSongs(country: String = "ZZ") async throws -> [YouTubeChartItem] {
+        return try await fetchChart(country: country, type: .song, sectionKeywords: ["song"])
+    }
+    
+    /// Top Music Videos Chart
+    public func getTopVideos(country: String = "ZZ") async throws -> [YouTubeChartItem] {
+        return try await fetchChart(country: country, type: .video, sectionKeywords: ["video"])
+    }
+    
+    /// Top Artists Chart
+    public func getTopArtists(country: String = "ZZ") async throws -> [YouTubeChartItem] {
+        return try await fetchChart(country: country, type: .artist, sectionKeywords: ["artist"])
+    }
+    
+    /// Trending (Global/Local)
+    public func getTrending(country: String = "ZZ") async throws -> [YouTubeChartItem] {
+        return try await fetchChart(country: country, type: .video, sectionKeywords: ["trending", "video"])
+    }
+    
+    // MARK: - Private Helpers
+    
+    private func fetchChart(
+        country: String,
+        type: YouTubeChartItem.ChartItemType,
+        sectionKeywords: [String]
+    ) async throws -> [YouTubeChartItem] {
+        let countryCode = normalizedCountryCode(country)
+
+        if let analyticsData = try? await analyticsNetwork.sendComplexRequest(
+            "browse",
+            body: [
+                "browseId": "FEmusic_analytics_charts_home",
+                "query": "perspective=CHART_HOME&chart_params_country_code=\(countryCode)"
+            ],
+            queryItems: [URLQueryItem(name: "alt", value: "json")],
+            additionalHeaders: ["X-Goog-Api-Format-Version": "2"]
+        ) {
+            let parsedHome = parseCharts(from: analyticsData, type: type, sectionKeywords: sectionKeywords)
+            if !parsedHome.isEmpty {
+                return parsedHome
+            }
+        }
+
+        if let legacyBrowseID = legacyBrowseID(for: type),
+           let legacyAnalyticsData = try? await analyticsNetwork.sendComplexRequest(
+                "browse",
+                body: ["browseId": legacyBrowseID],
+                queryItems: [URLQueryItem(name: "alt", value: "json")],
+                additionalHeaders: ["X-Goog-Api-Format-Version": "2"]
+           ) {
+            let parsedLegacy = parseCharts(from: legacyAnalyticsData, type: type, sectionKeywords: sectionKeywords)
+            if !parsedLegacy.isEmpty {
+                return parsedLegacy
+            }
+        }
+
+        // Last-resort fallback for clients that still reject analytics profiles.
+        let fallbackBody: [String: Any] = ["browseId": YouTubeSDKConstants.InternalKeys.BrowseIDs.Music.charts]
+        let fallbackData = try await musicNetwork.sendComplexRequest("browse", body: fallbackBody)
+        return parseCharts(from: fallbackData, type: type, sectionKeywords: sectionKeywords)
+    }
+
+    private nonisolated func normalizedCountryCode(_ country: String) -> String {
+        let normalized = country.trimmingCharacters(in: .whitespacesAndNewlines)
+        if normalized.isEmpty || normalized.uppercased() == "ZZ" || normalized.lowercased() == "global" {
+            return "global"
+        }
+        return normalized.lowercased()
+    }
+
+    private nonisolated func legacyBrowseID(for type: YouTubeChartItem.ChartItemType) -> String? {
+        switch type {
+        case .song:
+            return "FEmusic_analytics_charts_songs"
+        case .video:
+            return "FEmusic_analytics_charts_videos"
+        case .artist:
+            // This endpoint currently returns INVALID_ARGUMENT on charts.youtube.com.
+            // Keep artists on the charts home payload path instead of triggering noisy failures.
+            return nil
+        }
+    }
+    
+    // MARK: - Parsing Logic
+    
+    private func parseCharts(
+        from data: Data,
+        type: YouTubeChartItem.ChartItemType,
+        sectionKeywords: [String]
+    ) -> [YouTubeChartItem] {
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return [] }
+
+        let analyticsSections = findAll(key: "musicAnalyticsSectionRenderer", in: json).compactMap { $0 as? [String: Any] }
+        let analyticsItems = parseAnalyticsSections(
+            analyticsSections,
+            type: type,
+            sectionKeywords: sectionKeywords
+        )
+        if !analyticsItems.isEmpty {
+            return analyticsItems
+        }
+        
+        var items: [YouTubeChartItem] = []
+        var seenIDs = Set<String>()
+        
+        // Charts uses "musicResponsiveListItemRenderer" (Songs/Videos) and "musicTableRowRenderer" (Artists)
+        let rowRenderers = findAll(key: "musicResponsiveListItemRenderer", in: json) + findAll(key: "musicTableRowRenderer", in: json)
+        
+        for renderer in rowRenderers {
+            if let dict = renderer as? [String: Any],
+               let item = YouTubeChartItem(from: dict, type: type),
+               seenIDs.insert(item.id).inserted {
+                items.append(item)
+            }
+        }
+        
+        return items
+    }
+
+    private func parseAnalyticsSections(
+        _ sections: [[String: Any]],
+        type: YouTubeChartItem.ChartItemType,
+        sectionKeywords: [String]
+    ) -> [YouTubeChartItem] {
+        guard !sections.isEmpty else { return [] }
+
+        let normalizedKeywords = sectionKeywords.map { $0.lowercased() }
+        let matchingSections = sections.filter { section in
+            guard !normalizedKeywords.isEmpty else { return true }
+            guard let title = extractText(from: section["title"])?.lowercased() else { return false }
+            return normalizedKeywords.contains(where: { title.contains($0) })
+        }
+
+        let sectionsToParse = matchingSections.isEmpty ? sections : matchingSections
+        var items: [YouTubeChartItem] = []
+        var seenIDs = Set<String>()
+
+        for section in sectionsToParse {
+            let content = (section["content"] as? [String: Any]) ?? section
+            let entries = analyticsEntries(in: content, type: type)
+            for entry in entries {
+                if let dict = entry as? [String: Any],
+                   let item = YouTubeChartItem(from: dict, type: type),
+                   seenIDs.insert(item.id).inserted {
+                    items.append(item)
+                }
+            }
+        }
+
+        return items
+    }
+
+    private func analyticsEntries(in section: [String: Any], type: YouTubeChartItem.ChartItemType) -> [Any] {
+        var entries: [Any] = []
+
+        let preferredKeys: [String]
+        switch type {
+        case .song:
+            preferredKeys = ["trackViews", "tracks", "songs"]
+        case .video:
+            preferredKeys = ["videoViews", "trendingVideos"]
+        case .artist:
+            preferredKeys = ["artistViews"]
+        }
+
+        for key in preferredKeys {
+            if let found = entriesArray(for: key, in: section), !found.isEmpty {
+                entries.append(contentsOf: found)
+            }
+        }
+
+        switch type {
+        case .song:
+            if let trackTypes = section["trackTypes"] as? [Any] {
+                for trackType in trackTypes {
+                    if let trackTypeDict = trackType as? [String: Any],
+                       let found = entriesArray(for: "trackViews", in: trackTypeDict),
+                       !found.isEmpty {
+                        entries.append(contentsOf: found)
+                    }
+                }
+            }
+        case .video:
+            if let videos = section["videos"] as? [Any] {
+                for videosList in videos {
+                    if let videosListDict = videosList as? [String: Any],
+                       let found = entriesArray(for: "videoViews", in: videosListDict),
+                       !found.isEmpty {
+                        entries.append(contentsOf: found)
+                    }
+                }
+            }
+        case .artist:
+            if let artistsContainer = section["artists"] as? [String: Any],
+               let found = entriesArray(for: "artistViews", in: artistsContainer),
+               !found.isEmpty {
+                entries.append(contentsOf: found)
+            }
+        }
+
+        if !entries.isEmpty {
+            return entries
+        }
+
+        let fallbackKeys = ["trackViews", "videoViews", "artists", "artistViews"]
+        for key in fallbackKeys {
+            if let found = entriesArray(for: key, in: section), !found.isEmpty {
+                entries.append(contentsOf: found)
+            }
+        }
+
+        return entries
+    }
+
+    private func entriesArray(for key: String, in section: [String: Any]) -> [Any]? {
+        if let direct = section[key] as? [Any] {
+            return direct
+        }
+        if let wrapped = section[key] as? [String: Any],
+           let items = wrapped["items"] as? [Any] {
+            return items
+        }
+        return nil
+    }
+
+    private func extractText(from value: Any?) -> String? {
+        if let text = value as? String {
+            let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+            return trimmed.isEmpty ? nil : trimmed
+        }
+        if let dict = value as? [String: Any] {
+            if let simpleText = dict["simpleText"] as? String {
+                return simpleText
+            }
+            if let runs = dict["runs"] as? [[String: Any]] {
+                let joined = runs.compactMap { $0["text"] as? String }.joined()
+                let trimmed = joined.trimmingCharacters(in: .whitespacesAndNewlines)
+                return trimmed.isEmpty ? nil : trimmed
+            }
+        }
+        return nil
+    }
+    
+    private func findAll(key: String, in container: Any) -> [Any] {
+        var results: [Any] = []
+        if let dict = container as? [String: Any] {
+            if let found = dict[key] { results.append(found) }
+            for value in dict.values { results.append(contentsOf: findAll(key: key, in: value)) }
+        } else if let array = container as? [Any] {
+            for element in array { results.append(contentsOf: findAll(key: key, in: element)) }
+        }
+        return results
+    }
+}
+
+
+
+================================================
+FILE: Sources/YouTubeSDK/YouTubeCharts/Models/YouTubeChartItem.swift
+================================================
+//
+//  YouTubeChartItem.swift
+//  YouTubeSDK
+//
+//  Created by Aarav Gupta on 31/12/25.
+//
+
+import Foundation
+
+public struct YouTubeChartItem: Identifiable, Sendable {
+    public let id: String
+    public let title: String
+    public let subtitle: String // Artist or Channel Name
+    public let rank: String
+    public let thumbnailURL: URL?
+    public let type: ChartItemType
+    
+    // Metadata
+    public let viewCount: String?
+    public let change: String? // e.g., "NEW", "+1", "-3"
+    
+    public enum ChartItemType: String, Sendable {
+        case song
+        case video
+        case artist
+    }
+    
+    /// Robust Initializer for Charts
+    init?(from data: [String: Any], type: ChartItemType) {
+        let payload = Self.unwrapAnalyticsPayload(data)
+
+        guard let resolvedID = Self.extractID(from: payload) else { return nil }
+        self.id = resolvedID
+        self.type = type
+        
+        self.title = Self.extractText(from: payload["title"]) ?? Self.extractText(from: payload["name"]) ?? "Unknown"
+
+        self.subtitle = Self.extractText(from: payload["subtitle"])
+            ?? Self.extractText(from: payload["byline"])
+            ?? Self.extractText(from: payload["artist"])
+            ?? Self.extractText(from: payload["artistsText"])
+            ?? Self.extractText(from: payload["channelName"])
+            ?? Self.extractArtists(from: payload["artists"])
+            ?? Self.extractFlexSubtitle(from: payload)
+            ?? ""
+
+        self.rank = Self.extractRank(from: payload) ?? "0"
+        self.thumbnailURL = Self.extractThumbnailURL(from: payload)
+
+        self.viewCount = Self.extractText(from: payload["viewCountText"])
+            ?? Self.extractText(from: payload["viewCount"])
+            ?? Self.extractText(from: payload["viewsText"])
+
+        self.change = Self.extractChange(from: payload)
+    }
+
+    private static func unwrapAnalyticsPayload(_ data: [String: Any]) -> [String: Any] {
+        let modelKeys = [
+            "musicAnalyticsTrackViewModel",
+            "musicAnalyticsVideoViewModel",
+            "musicAnalyticsArtistViewModel"
+        ]
+        for key in modelKeys {
+            if let nested = data[key] as? [String: Any] {
+                return nested
+            }
+        }
+        return data
+    }
+
+    private static func extractID(from data: [String: Any]) -> String? {
+        if let videoId = data["videoId"] as? String {
+            return videoId
+        }
+        if let encryptedVideoID = data["encryptedVideoId"] as? String {
+            return encryptedVideoID
+        }
+        if let externalVideoID = data["atvExternalVideoId"] as? String {
+            return externalVideoID
+        }
+        if let channelId = data["browseId"] as? String {
+            return channelId
+        }
+        if let externalChannelID = data["externalChannelId"] as? String {
+            return externalChannelID
+        }
+        if let id = data["id"] as? String {
+            return id
+        }
+        if let entityID = data["entityId"] as? String {
+            return entityID
+        }
+        if let nav = data["navigationEndpoint"] as? [String: Any],
+           let watch = nav["watchEndpoint"] as? [String: Any],
+           let vid = watch["videoId"] as? String {
+            return vid
+        }
+        if let nav = data["navigationEndpoint"] as? [String: Any],
+           let browse = nav["browseEndpoint"] as? [String: Any],
+           let browseID = browse["browseId"] as? String {
+            return browseID
+        }
+        return nil
+    }
+
+    private static func extractText(from value: Any?) -> String? {
+        if let text = value as? String {
+            let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+            return trimmed.isEmpty ? nil : trimmed
+        }
+        if let intValue = value as? Int {
+            return String(intValue)
+        }
+        if let dict = value as? [String: Any] {
+            if let simpleText = dict["simpleText"] as? String {
+                return simpleText
+            }
+            if let runs = dict["runs"] as? [[String: Any]] {
+                let joined = runs.compactMap { $0["text"] as? String }.joined()
+                let trimmed = joined.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !trimmed.isEmpty { return trimmed }
+            }
+            if let text = dict["text"] as? String {
+                return text
+            }
+            if let text = dict["name"] as? String {
+                return text
+            }
+        }
+        return nil
+    }
+
+    private static func extractArtists(from value: Any?) -> String? {
+        guard let artists = value as? [[String: Any]] else { return nil }
+        let names = artists.compactMap { artist in
+            Self.extractText(from: artist["name"]) ?? Self.extractText(from: artist["text"])
+        }
+        if names.isEmpty { return nil }
+        return names.joined(separator: ", ")
+    }
+
+    private static func extractFlexSubtitle(from data: [String: Any]) -> String? {
+        guard let flex = data["flexColumns"] as? [[String: Any]], flex.count > 1,
+              let textData = (flex[1]["musicResponsiveListItemFlexColumnRenderer"] as? [String: Any])?["text"] else {
+            return nil
+        }
+        return Self.extractText(from: textData)
+    }
+
+    private static func extractRank(from data: [String: Any]) -> String? {
+        if let rank = Self.extractText(from: data["rank"]) {
+            return rank
+        }
+        if let rank = Self.extractText(from: data["chartRank"]) {
+            return rank
+        }
+        if let chartEntryMetadata = data["chartEntryMetadata"] as? [String: Any] {
+            if let currentPosition = chartEntryMetadata["currentPosition"] as? Int {
+                return String(currentPosition)
+            }
+            if let currentPosition = chartEntryMetadata["currentPosition"] as? String {
+                return currentPosition
+            }
+        }
+        if let indexCol = (data["customIndexColumn"] as? [String: Any])?["musicCustomIndexColumnRenderer"] as? [String: Any],
+           let textData = indexCol["text"] {
+            return Self.extractText(from: textData)
+        }
+        return nil
+    }
+
+    private static func extractThumbnailURL(from data: [String: Any]) -> URL? {
+        let candidates: [Any?] = [
+            data["thumbnailDetails"],
+            data["thumbnail"],
+            data["musicThumbnailRenderer"],
+            data["thumbnails"]
+        ]
+
+        for candidate in candidates {
+            if let url = thumbnailURL(from: candidate) {
+                return url
+            }
+        }
+
+        return nil
+    }
+
+    private static func thumbnailURL(from value: Any?) -> URL? {
+        if let thumbs = value as? [[String: Any]],
+           let urlString = thumbs.last?["url"] as? String {
+            return URL(string: urlString)
+        }
+
+        if let dict = value as? [String: Any] {
+            if let thumbs = dict["thumbnails"] as? [[String: Any]],
+               let urlString = thumbs.last?["url"] as? String {
+                return URL(string: urlString)
+            }
+
+            if let nested = dict["thumbnail"] {
+                return thumbnailURL(from: nested)
+            }
+
+            if let nested = dict["musicThumbnailRenderer"] {
+                return thumbnailURL(from: nested)
+            }
+        }
+
+        return nil
+    }
+
+    private static func extractChange(from data: [String: Any]) -> String? {
+        if let explicit = Self.extractText(from: data["change"]) ?? Self.extractText(from: data["chartChangeText"]) {
+            return explicit
+        }
+
+        guard let metadata = data["chartEntryMetadata"] as? [String: Any],
+              let current = metadata["currentPosition"] as? Int,
+              let previous = metadata["previousPosition"] as? Int else {
+            return nil
+        }
+
+        if previous <= 0 {
+            return "NEW"
+        }
+
+        let delta = previous - current
+        if delta > 0 {
+            return "+\(delta)"
+        }
+        if delta < 0 {
+            return "\(delta)"
+        }
+        return "0"
+    }
+}
+
+
+
+================================================
+FILE: Sources/YouTubeSDK/YouTubeMusic/YouTubeMusicClient+Details.swift
+================================================
+//
+//  YouTubeMusicClient+Details.swift
+//  YouTubeSDK
+//
+//  Created by Aarav Gupta on 13/03/26.
+//
+
+import Foundation
+
+extension YouTubeMusicClient {
+    
+    /// Fetches full Artist details (Songs, Albums, Singles)
+    public func getArtist(browseId: String) async throws -> YouTubeMusicArtistDetail {
+        let body = ["browseId": browseId]
+        let data = try await network.get("browse", body: body)
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            throw URLError(.cannotParseResponse)
+        }
+        let sections = await parseSections(from: json)
+        return YouTubeMusicArtistDetail(id: browseId, sections: sections)
+    }
+    
+    /// Fetches Album details (Tracks)
+    public func getAlbum(browseId: String) async throws -> [YouTubeMusicSong] {
+        let body = ["browseId": browseId]
+        let data = try await network.get("browse", body: body)
+        return await parseMusicItems(from: data)
+    }
+    
+    /// Fetches Playlist details (Tracks)
+    public func getPlaylist(browseId: String) async throws -> [YouTubeMusicSong] {
+        let browseId = browseId.hasPrefix("PL") ? "VL\(browseId)" : browseId
+        let body = ["browseId": browseId]
+        let data = try await network.get("browse", body: body)
+        return await parseMusicItems(from: data)
+    }
+}
+
+
+
+================================================
+FILE: Sources/YouTubeSDK/YouTubeMusic/YouTubeMusicClient+Discovery.swift
+================================================
+//
+//  YouTubeMusicClient+Discovery.swift
+//  YouTubeSDK
+//
+//  Created by Aarav Gupta on 13/03/26.
+//
+
+import Foundation
+
+extension YouTubeMusicClient {
+    
+    public func getHome() async throws -> [YouTubeMusicSection] {
+        let page = try await getHomePage()
+        return page.sections
+    }
+
+    public func getHomePage(regionCode: String? = nil, languageCode: String? = nil) async throws -> YouTubeMusicHomePage {
+        let client = makeNetwork(regionCode: regionCode, languageCode: languageCode)
+        let body = ["browseId": YouTubeSDKConstants.InternalKeys.BrowseIDs.Music.home]
+        let data = try await client.get("browse", body: body)
+        return parseHomePage(from: data)
+    }
+
+    public func getHomeContinuation(
+        token: String,
+        regionCode: String? = nil,
+        languageCode: String? = nil
+    ) async throws -> YouTubeMusicHomePage {
+        let client = makeNetwork(regionCode: regionCode, languageCode: languageCode)
+        let data = try await client.get("browse", body: ["continuation": token])
+        return parseHomePage(from: data)
+    }
+    
+    public func getCharts() async throws -> [YouTubeMusicSection] {
+        return try await browseSection(browseId: YouTubeSDKConstants.InternalKeys.BrowseIDs.Music.charts)
+    }
+    
+    public func getNewReleases() async throws -> [YouTubeMusicSection] {
+        return try await browseSection(browseId: YouTubeSDKConstants.InternalKeys.BrowseIDs.Music.newReleases)
+    }
+    
+    public func getMoods() async throws -> [YouTubeMusicSection] {
+        return try await browseSection(browseId: YouTubeSDKConstants.InternalKeys.BrowseIDs.Music.moods)
+    }
+    
+    // MARK: - User Library
+        
+    public func getLikedSongs() async throws -> [YouTubeMusicSong] {
+        let data = try await network.get("browse", body: ["browseId": YouTubeSDKConstants.InternalKeys.BrowseIDs.Music.likedVideos])
+        return await parseMusicItems(from: data)
+    }
+    
+    public func getHistory() async throws -> [YouTubeMusicSong] {
+        let data = try await network.get("browse", body: ["browseId": YouTubeSDKConstants.InternalKeys.BrowseIDs.Music.history])
+        return await parseMusicItems(from: data)
+    }
+    
+    public func getLibrary() async throws -> [YouTubeMusicSection] {
+        let data = try await network.get("browse", body: ["browseId": YouTubeSDKConstants.InternalKeys.BrowseIDs.Music.library])
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return [] }
+        return await parseSections(from: json)
+    }
+    
+    private func browseSection(browseId: String) async throws -> [YouTubeMusicSection] {
+        let body = ["browseId": browseId]
+        let data = try await network.get("browse", body: body)
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return [] }
+        return await parseSections(from: json)
+    }
+
+    private func makeNetwork(regionCode: String?, languageCode: String?) -> NetworkClient {
+        guard let normalizedRegion = normalizedRegionCode(regionCode) else {
+            return network
+        }
+
+        let normalizedLanguage = normalizedLanguageCode(languageCode)
+        let context = InnerTubeContext(
+            client: ClientConfig.webRemix,
+            cookies: cookies,
+            gl: normalizedRegion,
+            hl: normalizedLanguage
+        )
+        return NetworkClient(context: context, baseURL: YouTubeSDKConstants.URLS.API.youtubeMusicInnerTubeURL)
+    }
+
+    private func normalizedRegionCode(_ rawRegionCode: String?) -> String? {
+        guard let raw = rawRegionCode?.trimmingCharacters(in: .whitespacesAndNewlines), !raw.isEmpty else {
+            return nil
+        }
+        let uppercased = raw.uppercased()
+        guard uppercased.count == 2 else { return nil }
+        return uppercased
+    }
+
+    private func normalizedLanguageCode(_ rawLanguageCode: String?) -> String {
+        guard let raw = rawLanguageCode?.trimmingCharacters(in: .whitespacesAndNewlines), !raw.isEmpty else {
+            return "en"
+        }
+
+        if let separator = raw.firstIndex(where: { $0 == "-" || $0 == "_" }) {
+            return String(raw[..<separator]).lowercased()
+        }
+
+        return raw.lowercased()
+    }
+}
+
+
+
+================================================
+FILE: Sources/YouTubeSDK/YouTubeMusic/YouTubeMusicClient+Parsing.swift
+================================================
+//
+//  YouTubeMusicClient+Parsing.swift
+//  YouTubeSDK
+//
+//  Created by Aarav Gupta on 13/03/26.
+//
+
+import Foundation
+
+extension YouTubeMusicClient {
+    
+    // MARK: - Internal Parsing Helpers
+    
+    func parseMusicItems(from data: Data) -> [YouTubeMusicSong] {
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return [] }
+        let items = findAll(key: "musicResponsiveListItemRenderer", in: json)
+        return items.compactMap { ($0 as? [String: Any]).flatMap { YouTubeMusicSong(from: $0) } }
+    }
+
+    func parseHomePage(from data: Data) -> YouTubeMusicHomePage {
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return YouTubeMusicHomePage(sections: [], continuationToken: nil)
+        }
+
+        let sections = parseSections(from: json)
+        let continuationToken = findContinuationToken(in: json)
+        return YouTubeMusicHomePage(sections: sections, continuationToken: continuationToken)
+    }
+    
+    func parseSections(from json: [String: Any]) -> [YouTubeMusicSection] {
+        var sections: [YouTubeMusicSection] = []
+        
+        // 1. Carousels (Horizontal)
+        let carousels = findAll(key: "musicCarouselShelfRenderer", in: json)
+        for carousel in carousels {
+            if let dict = carousel as? [String: Any],
+               let section = YouTubeMusicSection(from: dict) {
+                sections.append(section)
+            }
+        }
+        
+        // 2. Shelves (Vertical)
+        let shelves = findAll(key: "musicShelfRenderer", in: json)
+        for shelf in shelves {
+            if let dict = shelf as? [String: Any],
+               let section = YouTubeMusicSection(from: dict) {
+                sections.append(section)
+            }
+        }
+        
+        return sections
+    }
+    
+    /// Recursively finds all dictionaries with a specific key.
+    func findAll(key: String, in container: Any) -> [Any] {
+        var results: [Any] = []
+        if let dict = container as? [String: Any] {
+            if let found = dict[key] { results.append(found) }
+            for value in dict.values { results.append(contentsOf: findAll(key: key, in: value)) }
+        } else if let array = container as? [Any] {
+            for element in array { results.append(contentsOf: findAll(key: key, in: element)) }
+        }
+        return results
+    }
+
+    func findContinuationToken(in container: Any) -> String? {
+        if let dict = container as? [String: Any] {
+            if let token = dict["continuation"] as? String { return token }
+            if let continuationData = (dict["continuationEndpoint"] as? [String: Any])?["continuationCommand"] as? [String: Any],
+               let token = continuationData["token"] as? String {
+                return token
+            }
+            for value in dict.values {
+                if let found = findContinuationToken(in: value) {
+                    return found
+                }
+            }
+        } else if let array = container as? [Any] {
+            for element in array {
+                if let found = findContinuationToken(in: element) {
+                    return found
+                }
+            }
+        }
+        return nil
+    }
+}
+
+
+
+================================================
+FILE: Sources/YouTubeSDK/YouTubeMusic/YouTubeMusicClient+Social.swift
+================================================
+//
+//  YouTubeMusicClient+Social.swift
+//  YouTubeSDK
+//
+//  Created by Aarav Gupta on 13/03/26.
+//
+
+import Foundation
+
+extension YouTubeMusicClient {
+    
+    public func getLyrics(videoId: String) async throws -> String? {
+        let nextData = try await network.get("next", body: ["videoId": videoId])
+        guard let json = try? JSONSerialization.jsonObject(with: nextData) as? [String: Any] else { return nil }
+        
+        let tabs = await findAll(key: "tabRenderer", in: json)
+        guard let lyricsTab = tabs.first(where: { ($0 as? [String: Any])?["title"] as? String == "Lyrics" }) as? [String: Any],
+              let endpoint = lyricsTab["endpoint"] as? [String: Any],
+              let browseId = (endpoint["browseEndpoint"] as? [String: Any])?["browseId"] as? String else {
+            return nil
+        }
+        
+        let lyricsData = try await network.get("browse", body: ["browseId": browseId])
+        guard let lyricsJson = try? JSONSerialization.jsonObject(with: lyricsData) as? [String: Any] else { return nil }
+        
+        let descriptions = await findAll(key: "musicDescriptionShelfRenderer", in: lyricsJson)
+        if let shelf = descriptions.first as? [String: Any],
+           let desc = shelf["description"] as? [String: Any],
+           let runs = desc["runs"] as? [[String: Any]] {
+            return runs.compactMap { $0["text"] as? String }.joined()
+        }
+        return nil
+    }
+    
+    // MARK: - Interactions
+    
+    public func like(videoId: String) async throws {
+        let body: [String: Any] = ["target": ["videoId": videoId]]
+        _ = try await network.sendComplexRequest("like/like", body: body)
+    }
+    
+    public func removeLike(videoId: String) async throws {
+        let body: [String: Any] = ["target": ["videoId": videoId]]
+        _ = try await network.sendComplexRequest("like/removelike", body: body)
+    }
+    
+    public func dislike(videoId: String) async throws {
+        let body: [String: Any] = ["target": ["videoId": videoId]]
+        _ = try await network.sendComplexRequest("like/dislike", body: body)
+    }
+    
+    public func subscribe(channelId: String) async throws {
+        let body: [String: Any] = ["channelIds": [channelId]]
+        _ = try await network.sendComplexRequest("subscription/subscribe", body: body)
+    }
+    
+    public func unsubscribe(channelId: String) async throws {
+        let body: [String: Any] = ["channelIds": [channelId]]
+        _ = try await network.sendComplexRequest("subscription/unsubscribe", body: body)
+    }
+}
+
+
+
+================================================
+FILE: Sources/YouTubeSDK/YouTubeMusic/YouTubeMusicClient.swift
+================================================
+//
+//  YouTubeMusicClient.swift
+//  YouTubeSDK
+//
+//  Created by Aarav Gupta on 26/12/25.
+//
+
+import Foundation
+
+public actor YouTubeMusicClient {
+    
+    let network: NetworkClient
+    let cookies: String?
+    
+    public init(cookies: String? = nil) {
+        self.cookies = cookies
+        let context = InnerTubeContext(client: ClientConfig.webRemix, cookies: cookies)
+        self.network = NetworkClient(context: context, baseURL: YouTubeSDKConstants.URLS.API.youtubeMusicInnerTubeURL)
+    }
+
+    public func search(_ query: String) async throws -> [YouTubeMusicSong] {
+        let data = try await network.get("search", body: ["query": query])
+        return await parseMusicItems(from: data)
+    }
+    
+    public func getSearchSuggestions(query: String) async throws -> [String] {
+        let body = ["input": query]
+        let data = try await network.get("music/get_search_suggestions", body: body)
+        
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return []
+        }
+        
+        let suggestions = await findAll(key: "searchSuggestionRenderer", in: json)
+        return suggestions.compactMap { item in
+            guard let dict = item as? [String: Any] else { return nil }
+            
+            // Try both parsing styles found in discovery
+            if let nav = dict["navigationEndpoint"] as? [String: Any],
+               let search = nav["searchEndpoint"] as? [String: Any],
+               let query = search["query"] as? String {
+                return query
+            }
+            
+            if let sugg = dict["suggestion"] as? [String: Any],
+               let runs = sugg["runs"] as? [[String: Any]] {
+                return runs.compactMap { $0["text"] as? String }.joined()
+            }
+            
+            return nil
+        }
+    }
+}
+
+
+
+================================================
+FILE: Sources/YouTubeSDK/YouTubeMusic/Models/YouTubeMusicAlbum.swift
+================================================
+//
+//  YouTubeMusicAlbum.swift
+//  YouTubeSDK
+//
+//  Created by Aarav Gupta on 31/12/25.
+//
+
+
+import Foundation
+
+public struct YouTubeMusicAlbum: Identifiable, Sendable {
+    public let id: String
+    public let title: String
+    public let artist: String?
+    public let year: String?
+    public let thumbnailURL: URL?
+    public let explicit: Bool
+    
+    init?(from data: [String: Any]) {
+        guard let id = data["browseId"] as? String ?? data["playlistId"] as? String else { return nil }
+        self.id = id
+        self.title = data["title"] as? String ?? "Unknown Album"
+        self.year = data["year"] as? String
+        self.explicit = (data["isExplicit"] as? Bool) ?? false
+        
+        // Artist might be a string or nested object depending on endpoint
+        if let artists = data["artists"] as? [[String: Any]], let first = artists.first {
+            self.artist = first["name"] as? String
+        } else {
+            self.artist = nil
+        }
+        
+        if let thumbnails = data["thumbnails"] as? [[String: Any]],
+           let urlString = thumbnails.last?["url"] as? String {
+            self.thumbnailURL = URL(string: urlString)
+        } else {
+            self.thumbnailURL = nil
+        }
+    }
+}
+
+
+================================================
+FILE: Sources/YouTubeSDK/YouTubeMusic/Models/YouTubeMusicArtist.swift
+================================================
+//
+//  YouTubeMusicArtist.swift
+//  YouTubeSDK
+//
+//  Created by Aarav Gupta on 31/12/25.
+//
+
+
+import Foundation
+
+public struct YouTubeMusicArtist: Identifiable, Sendable {
+    public let id: String
+    public let name: String
+    public let thumbnailURL: URL?
+    public let subscriberCount: String?
+    
+    init?(from data: [String: Any]) {
+        // Handle both "browseId" (from search) and "id" (from inline)
+        guard let id = data["browseId"] as? String ?? data["id"] as? String else { return nil }
+        self.id = id
+        self.name = data["name"] as? String ?? "Unknown Artist"
+        
+        if let thumbnails = data["thumbnails"] as? [[String: Any]],
+           let urlString = thumbnails.last?["url"] as? String {
+            self.thumbnailURL = URL(string: urlString)
+        } else {
+            self.thumbnailURL = nil
+        }
+        
+        self.subscriberCount = data["subscriberCount"] as? String
+    }
+}
+
+
+================================================
+FILE: Sources/YouTubeSDK/YouTubeMusic/Models/YouTubeMusicHomePage.swift
+================================================
+//
+//  YouTubeMusicHomePage.swift
+//  YouTubeSDK
+//
+//  Created by Aarav Gupta on 29/03/26.
+//
+
+import Foundation
+
+public struct YouTubeMusicHomePage: Sendable {
+    public let sections: [YouTubeMusicSection]
+    public let continuationToken: String?
+
+    public init(sections: [YouTubeMusicSection], continuationToken: String?) {
+        self.sections = sections
+        self.continuationToken = continuationToken
+    }
+
+    public var items: [YouTubeMusicItem] {
+        sections.flatMap(\.items)
+    }
+}
+
+
+================================================
+FILE: Sources/YouTubeSDK/YouTubeMusic/Models/YouTubeMusicItem.swift
+================================================
+//
+//  YouTubeMusicItem.swift
+//  YouTubeSDK
+//
+//  Created by Aarav Gupta on 31/12/25.
+//
+
+import Foundation
+
+public enum YouTubeMusicItem: Identifiable, Sendable {
+    case song(YouTubeMusicSong)
+    case album(YouTubeMusicAlbum)
+    case artist(YouTubeMusicArtist)
+    case playlist(YouTubeMusicPlaylist)
+    
+    public var id: String {
+        switch self {
+        case .song(let s): return s.id
+        case .album(let a): return a.id
+        case .artist(let a): return a.id
+        case .playlist(let p): return p.id
+        }
+    }
+}
+
+public struct YouTubeMusicArtistDetail: Identifiable, Sendable {
+    public let id: String
+    public let sections: [YouTubeMusicSection]
+}
+
+
+
+================================================
+FILE: Sources/YouTubeSDK/YouTubeMusic/Models/YouTubeMusicPlaylist.swift
+================================================
+    //
+//  YouTubeMusicPlaylist.swift
+//  YouTubeSDK
+//
+//  Created by Aarav Gupta on 31/12/25.
+//
+
+
+import Foundation
+
+public struct YouTubeMusicPlaylist: Identifiable, Sendable {
+    public let id: String
+    public let title: String
+    public let author: String?
+    public let count: String?
+    public let thumbnailURL: URL?
+    
+    init?(from data: [String: Any]) {
+        guard let id = data["browseId"] as? String ?? data["playlistId"] as? String else { return nil }
+        self.id = id
+        self.title = data["title"] as? String ?? "Unknown Playlist"
+        self.count = data["itemCount"] as? String
+        
+        if let authors = data["authors"] as? [[String: Any]], let first = authors.first {
+            self.author = first["name"] as? String
+        } else {
+            self.author = nil
+        }
+        
+        if let thumbnails = data["thumbnails"] as? [[String: Any]],
+           let urlString = thumbnails.last?["url"] as? String {
+            self.thumbnailURL = URL(string: urlString)
+        } else {
+            self.thumbnailURL = nil
+        }
+    }
+}
+
+
+
+================================================
+FILE: Sources/YouTubeSDK/YouTubeMusic/Models/YouTubeMusicSection.swift
+================================================
+//
+//  YouTubeMusicSection.swift
+//  YouTubeSDK
+//
+//  Created by Aarav Gupta on 31/12/25.
+//
+
+import Foundation
+
+public struct YouTubeMusicSection: Identifiable, Sendable {
+    public let id = UUID()
+    public let title: String
+    public let items: [YouTubeMusicItem]
+    
+    init?(from data: [String: Any]) {
+        // Extract Title
+        if let header = data["header"] as? [String: Any],
+           let titleRun = (header["musicCarouselShelfBasicHeaderRenderer"] ?? header["musicShelfHeaderRenderer"]) as? [String: Any],
+           let titleText = (titleRun["title"] as? [String: Any])?["runs"] as? [[String: Any]],
+           let title = titleText.first?["text"] as? String {
+            self.title = title
+        } else {
+            self.title = ""
+        }
+        
+        // Extract Contents
+        guard let contents = data["contents"] as? [[String: Any]] else { return nil }
+        
+        self.items = contents.compactMap { itemDict in
+            // Check for Song
+            if let songData = itemDict["musicResponsiveListItemRenderer"] as? [String: Any] {
+                if let song = YouTubeMusicSong(from: songData) { return .song(song) }
+            }
+            
+            // Check for Album/Playlist (Two Row Item)
+            if let boxData = itemDict["musicTwoRowItemRenderer"] as? [String: Any] {
+                // Heuristic: Nav endpoint tells us what it is
+                let nav = boxData["navigationEndpoint"] as? [String: Any]
+                let browse = nav?["browseEndpoint"] as? [String: Any]
+                
+                // FIX: Break down the nested casting so Swift knows each level is a Dictionary
+                let supportedConfigs = browse?["browseEndpointContextSupportedConfigs"] as? [String: Any]
+                let musicConfig = supportedConfigs?["browseEndpointContextMusicConfig"] as? [String: Any]
+                let pageType = musicConfig?["pageType"] as? String
+                
+                if pageType == "MUSIC_PAGE_TYPE_ALBUM" {
+                    if let album = YouTubeMusicAlbum(from: boxData) { return .album(album) }
+                } else if pageType == "MUSIC_PAGE_TYPE_PLAYLIST" {
+                    if let playlist = YouTubeMusicPlaylist(from: boxData) { return .playlist(playlist) }
+                } else if pageType == "MUSIC_PAGE_TYPE_ARTIST" {
+                    if let artist = YouTubeMusicArtist(from: boxData) { return .artist(artist) }
+                }
+            }
+            return nil
+        }
+    }
+}
+
+
+
+================================================
+FILE: Sources/YouTubeSDK/YouTubeMusic/Models/YouTubeMusicSong.swift
+================================================
+//
+//  YouTubeMusicSong.swift
+//  YouTubeSDK
+//
+//  Created by Aarav Gupta on 26/12/25.
+//
+
+import Foundation
+
+public struct YouTubeMusicSong: Identifiable, Sendable {
+    public let id: String
+    public let title: String
+    public let artists: [String]
+    public let album: String?
+    public let duration: TimeInterval?
+    public let thumbnailURL: URL?
+    public let videoId: String
+    public let isExplicit: Bool
+    
+    // Helper for UI
+    public var artistsDisplay: String { artists.joined(separator: ", ") }
+
+    /// Robust Manual Initializer.
+    /// Extracts data from a "musicResponsiveListItemRenderer" dictionary.
+    init?(from data: [String: Any]) {
+        // 1. ID Extraction (Try videoId, fallback to navigationEndpoint)
+        var extractedId: String?
+        
+        if let vid = data["videoId"] as? String {
+            extractedId = vid
+        } else if let playlistItem = data["playlistItemData"] as? [String: Any],
+                  let vid = playlistItem["videoId"] as? String {
+            extractedId = vid
+        } else if let endpoint = data["navigationEndpoint"] as? [String: Any],
+                  let watch = endpoint["watchEndpoint"] as? [String: Any],
+                  let vid = watch["videoId"] as? String {
+            extractedId = vid
+        }
+        
+        guard let finalId = extractedId else { return nil }
+        self.id = finalId
+        self.videoId = finalId
+        
+        // 2. Title (Flex Column 0)
+        if let columns = data["flexColumns"] as? [[String: Any]],
+           let firstCol = columns.first,
+           let textParams = firstCol["musicResponsiveListItemFlexColumnRenderer"] as? [String: Any],
+           let textData = textParams["text"] as? [String: Any],
+           let runs = textData["runs"] as? [[String: Any]],
+           let title = runs.first?["text"] as? String {
+            self.title = title
+        } else {
+            self.title = "Unknown Title"
+        }
+        
+        // 3. Metadata (Flex Column 1: Artist, Album, Duration)
+        var foundArtists: [String] = []
+        var foundAlbum: String?
+        var foundDuration: TimeInterval?
+        
+        if let columns = data["flexColumns"] as? [[String: Any]], columns.count > 1 {
+            let secondCol = columns[1]
+            if let textParams = secondCol["musicResponsiveListItemFlexColumnRenderer"] as? [String: Any],
+               let textData = textParams["text"] as? [String: Any],
+               let runs = textData["runs"] as? [[String: Any]] {
+                
+                // Iterate through runs to categorize them
+                // Kaset logic: Look for navigationEndpoint to identify Artist/Album
+                for run in runs {
+                    if let text = run["text"] as? String {
+                        if let endpoint = run["navigationEndpoint"] as? [String: Any],
+                           let browse = endpoint["browseEndpoint"] as? [String: Any],
+                           let pageType = browse["browseEndpointContextSupportedConfigs"] as? [String: Any] {
+                             
+                             // Check type (Artist vs Album)
+                             let config = pageType["browseEndpointContextMusicConfig"] as? [String: Any]
+                             let type = config?["pageType"] as? String
+                             
+                             if type == "MUSIC_PAGE_TYPE_ARTIST" {
+                                 foundArtists.append(text)
+                             } else if type == "MUSIC_PAGE_TYPE_ALBUM" {
+                                 foundAlbum = text
+                             }
+                        } else {
+                            // If it's a timestamp (e.g. "3:45"), parse it
+                            if text.contains(":") {
+                                foundDuration = Self.parseDuration(text)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        self.artists = foundArtists
+        self.album = foundAlbum
+        self.duration = foundDuration
+        
+        // 4. Thumbnail
+        if let thumbContainer = data["thumbnail"] as? [String: Any],
+           let musicThumb = thumbContainer["musicThumbnailRenderer"] as? [String: Any],
+           let image = musicThumb["thumbnail"] as? [String: Any],
+           let thumbnails = image["thumbnails"] as? [[String: Any]],
+           let last = thumbnails.last,
+           let urlString = last["url"] as? String {
+            self.thumbnailURL = URL(string: urlString)
+        } else {
+            self.thumbnailURL = nil
+        }
+        
+        // 5. Explicit Badge
+        // assume false, then prove true if found the badge.
+        var explicitBadgeFound = false
+        
+        if let badges = data["badges"] as? [[String: Any]] {
+            for badge in badges {
+                if let renderer = badge["musicInlineBadgeRenderer"] as? [String: Any],
+                   let icon = renderer["icon"] as? [String: Any],
+                   let type = icon["iconType"] as? String,
+                   type == "MUSIC_EXPLICIT_BADGE" {
+                    explicitBadgeFound = true
+                    break
+                }
+            }
+        }
+        
+        self.isExplicit = explicitBadgeFound
+    }
+    
+    private static func parseDuration(_ string: String) -> TimeInterval? {
+        let parts = string.split(separator: ":").compactMap { Double($0) }
+        if parts.count == 2 { return (parts[0] * 60) + parts[1] }
+        if parts.count == 3 { return (parts[0] * 3600) + (parts[1] * 60) + parts[2] }
+        return nil
+    }
+}
+
+
+
+================================================
+FILE: Sources/YouTubeSDK/YouTubeOAuth/YouTubeOAuthClient.swift
+================================================
+//
+//  YouTubeOAuthClient.swift
+//  YouTubeSDK
+//
+//  Created by Aarav Gupta on 26/12/25.
+//
+
+import Foundation
+
+/// Acts as the Session Manager for the entire SDK.
+/// Use this to Save, Load, and Validate cookies.
+public actor YouTubeOAuthClient {
+    
+    private let network: NetworkClient
+    public static let sharedCookieKey = "youtube_user_cookies"
+    
+    /// Initializes the Auth Client.
+    /// automatically loads the saved cookies from Keychain to perform validation checks.
+    public init() {
+        let cookies = Keychain.load(key: Self.sharedCookieKey)
+        // We use the iOS client configuration for generic account checks, as it's highly reliable.
+        let context = InnerTubeContext(client: ClientConfig.ios, cookies: cookies)
+        self.network = NetworkClient(context: context)
+    }
+    
+    // MARK: - Validation
+    
+    /// Verifies if the currently stored cookies are valid by hitting a private endpoint.
+    /// - Returns: `true` if logged in, `false` if guest/expired.
+    public func validateSession() async -> Bool {
+        do {
+            // 'account/account_menu' is a lightweight endpoint that returns user info.
+            // It doesn't require a complex body, just the Cookie header.
+            let data = try await network.get("account/account_menu")
+            
+            // If the response contains specific account renderers, the session is active.
+            if let json = String(data: data, encoding: .utf8),
+               json.contains("googleAccountHeaderRenderer") {
+                return true
+            }
+        } catch {
+            print("⚠️ Auth Validation Failed: \(error)")
+        }
+        return false
+    }
+    
+    // MARK: - Static Helpers (Developer Experience)
+    
+    /// Saves the cookies string (from GoogleLoginView) to the secure Keychain.
+    public static func saveCookies(_ cookies: String) {
+        Keychain.save(cookies, key: sharedCookieKey)
+    }
+    
+    /// Loads the saved cookies string to pass into other Clients.
+    public static func loadCookies() -> String? {
+        Keychain.load(key: sharedCookieKey)
+    }
+    
+    /// Wipes the session (Logout).
+    public static func logout() {
+        Keychain.delete(key: sharedCookieKey)
+    }
+}
+
+
+
+================================================
+FILE: Tests/YouTubeSDKTests/YouTubeSDKTests.swift
+================================================
+import Testing
+import Foundation
+@testable import YouTubeSDK
+
+struct YouTubeSDKTests {
+    
+    @Test("Fetch Video Details (Never Gonna Give You Up)")
+    func fetchVideo() async throws {
+        // 1. Arrange
+        let client = YouTubeClient()
+        let videoId = "dQw4w9WgXcQ" // The legendary ID
+        
+        // 2. Act
+        let video = try await client.video(id: videoId)
+
+        if let hlsURL = video.hlsURL {
+            // 1. Pass directly to AVPlayer
+            print(hlsURL)
+        } else if let audio = video.bestAudioStream, let url = URL(string: audio.url ?? "") {
+            // 2. Play high-quality audio
+            print(url)
+        }
+        
+        // 3. Assert
+        #expect(video.id == videoId)
+        #expect(video.title.contains("Rick Astley")) // It should be "Rick Astley - Never Gonna Give You Up"
+        #expect(video.author == "Rick Astley")
+        
+        // Print it just to feel good
+        print("✅ Fetched: \(video.title) by \(video.author)")
+    }
+
+    @Test("Fetch Home Feed")
+    func fetchHomeFeed() async throws {
+        let client = YouTubeClient()
+        let feed = try await client.getHome()
+        #expect(!feed.items.isEmpty)
+    }
+
+    @Test("Fetch Music-Only Home Feed")
+    func fetchMusicOnlyHomeFeed() async throws {
+        let client = YouTubeClient()
+        let feed = try await client.getHome(musicOnly: true)
+        #expect(!feed.items.isEmpty)
+    }
+}
+
+
+
+================================================
+FILE: Tests/YouTubeSDKTests/CoreTests/CoreTests.swift
+================================================
+import Testing
+@testable import YouTubeSDK
+import Foundation
+
+struct CoreTests {
+
+    // MARK: - Logic Tests
+    
+    @Test("Verifies that InnerTubeContext generates the correct JSON structure")
+    func contextGeneration() {
+        // 1. Arrange
+        let config = ClientConfig.android
+        let context = InnerTubeContext(client: config, gl: "IN", hl: "en")
+        
+        // 2. Act
+        let body = context.body
+        let contextDict = body["context"] as? [String: Any]
+        let clientDict = contextDict?["client"] as? [String: Any]
+        
+        // 3. Assert (Notice the cleaner syntax)
+        #expect(clientDict != nil, "The body should contain a 'context.client' object")
+        #expect(clientDict?["clientName"] as? String == "ANDROID")
+        #expect(clientDict?["gl"] as? String == "IN")
+        #expect(context.headers["User-Agent"] == config.userAgent)
+    }
+
+    @Test("Charts analytics client identity contract")
+    func chartsAnalyticsContextContract() {
+        let context = InnerTubeContext(client: .webMusicAnalytics)
+        let body = context.body
+        let contextDict = body["context"] as? [String: Any]
+        let clientDict = contextDict?["client"] as? [String: Any]
+
+        #expect(context.headers["X-YouTube-Client-Name"] == "31")
+        #expect(context.headers["X-YouTube-Client-Version"] == "2.0")
+        #expect(clientDict?["clientName"] as? String == "WEB_MUSIC_ANALYTICS")
+        #expect(clientDict?["clientVersion"] as? String == "2.0")
+    }
+
+    // MARK: - Integration Tests
+    
+    @Test("Real Network Call (Guide Endpoint)")
+    func networkCall() async throws {
+        // 1. Arrange
+        let context = InnerTubeContext(client: .ios)
+        let client = NetworkClient(context: context)
+        
+        // 2. Act & Assert
+        // In Swift Testing, if a function throws, the test fails automatically.
+        // We just need to try the call.
+        let _: EmptyJSONResponse = try await client.send("v1/guide", body: [:])
+        
+        // If we reach this line, it means no error was thrown -> Success!
+    }
+}
+
+// Helper
+struct EmptyJSONResponse: Decodable {}
+
+
+
+================================================
+FILE: Tests/YouTubeSDKTests/YouTubeChartsTests/YouTubeChartsTests.swift
+================================================
+import Testing
+@testable import YouTubeSDK
+
+struct YouTubeChartsTests {
+    @Test("Connect to YouTube Charts")
+    func testChartsConnection() async throws {
+        let client = YouTubeChartsClient()
+        let songs = try await client.getTopSongs()
+        let artists = try await client.getTopArtists()
+        #expect(!songs.isEmpty)
+        #expect(!artists.isEmpty)
+    }
+}
+
+
+
+================================================
+FILE: Tests/YouTubeSDKTests/YouTubeMusicTests/YouTubeMusicTests.swift
+================================================
+import Testing
+@testable import YouTubeSDK
+
+struct YouTubeMusicTests {
+    @Test("Connect to YouTube Music")
+    func testMusicConnection() async throws {
+        let client = YouTubeMusicClient()
+        let response = try await client.search("banda kaam ka")
+        
+        print(response)
+    }
+
+    @Test("Fetch YouTube Music Charts Sections")
+    func testMusicChartsSections() async throws {
+        let client = YouTubeMusicClient()
+        let sections = try await client.getCharts()
+        print("ytmusic_charts_sections_count=\(sections.count)")
+        for section in sections.prefix(8) {
+            print("ytmusic_chart_section title=\(section.title) items=\(section.items.count)")
+        }
+        #expect(!sections.isEmpty)
+    }
+
+    @Test("Fetch paginated YouTube Music home page")
+    func testMusicHomePage() async throws {
+        let client = YouTubeMusicClient()
+        let page = try await client.getHomePage()
+
+        #expect(!page.sections.isEmpty || !page.items.isEmpty || page.continuationToken != nil)
+
+        if let token = page.continuationToken, !token.isEmpty {
+            _ = try await client.getHomeContinuation(token: token)
+        }
+    }
+}
+
+
+
+================================================
+FILE: Tests/YouTubeSDKTests/YouTubeOAuthTests/YouTubeOAuthTests.swift
+================================================
+import Testing
+@testable import YouTubeSDK
+
+struct YouTubeOAuthTests {
+    
+    @Test("Authenticate with YouTube (Interactive)")
+    func testAuthFlow() async throws {
+        
+    }
+}
+
+
