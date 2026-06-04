@@ -10,13 +10,13 @@ import Foundation
 enum HttpMethod {
     case get
     case post
-    
+
     var rawString: String {
         switch self {
         case .get:
-            return "GET"
+            "GET"
         case .post:
-            return "POST"
+            "POST"
         }
     }
 }

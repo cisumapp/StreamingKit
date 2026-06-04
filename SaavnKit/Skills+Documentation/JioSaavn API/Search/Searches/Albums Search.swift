@@ -5,12 +5,12 @@
 //  Created by Aarav Gupta on 09/03/24.
 //
 
-import SwiftUI
 import AVKit
 import SDWebImageSwiftUI
+import SwiftUI
 
 struct AlbumSearch: View {
-    let AccentColor = Color(red : 0.9764705882352941, green: 0.17647058823529413, blue: 0.2823529411764706)
+    let AccentColor = Color(red: 0.9764705882352941, green: 0.17647058823529413, blue: 0.2823529411764706)
     @State private var animateContent: Bool = false
     @State var expandPlayer: Bool = false
     @Namespace var animation
@@ -20,22 +20,19 @@ struct AlbumSearch: View {
     @State private var error: Error?
     var body: some View {
         VStack {
-            
-            self.inputBox
+            inputBox
                 .padding()
-            
+
             ScrollView(.vertical) {
                 LazyVStack(alignment: .leading, spacing: nil) {
-                    
                     if isLoading {
                         ProgressView()
                     } else if let error {
                         Text(error.localizedDescription)
                     } else if let results = searchResults?.data.results {
-                        
                         ForEach(results.indices, id: \.self) { index in
                             let result = results[index]
-                            self.buildResultItemContainer(result)
+                            buildResultItemContainer(result)
                         }
                     }
                 }
@@ -44,62 +41,69 @@ struct AlbumSearch: View {
             }
         }
     }
-    
+
     private var inputBox: some View {
-        TextField("Search Albums",
-                  text: $editingKeyword,
-                  prompt: nil)
+        TextField(
+            "Search Albums",
+            text: $editingKeyword,
+            prompt: nil
+        )
         .textFieldStyle(.roundedBorder)
         .onSubmit {
-            self.runSearch()
+            runSearch()
         }
     }
-    
+
     private func buildResultItemContainer(_ item: JioSaavnAlbumResponse.JioSaavnAlbumData.JioSaavnAlbumResult) -> some View {
         let imageUrl = item.image.first?.url == nil ? nil : URL(string: item.image.first!.url)
-        let artists = item.artists.all.map { $0.name }.joined(separator: "&")
+        let artists = item.artists.all.map(\.name).joined(separator: "&")
         return HStack {
             AsyncImage(url: imageUrl)
                 .frame(width: 55, height: 55)
-            
-            VStack(alignment: .leading,
-                   spacing: 2.5) {
+
+            VStack(
+                alignment: .leading,
+                spacing: 2.5
+            ) {
                 Text(item.name)
                     .font(.system(size: 17))
                 Text(artists)
                     .font(.system(size: 15))
                     .foregroundColor(.secondary)
             }
-            
+
             Spacer(minLength: .zero)
         }
         .lineLimit(1)
     }
-    
+
     func runSearch() {
         guard !editingKeyword.isEmpty else {
             return
         }
-        self.isLoading = true
+        isLoading = true
         let controller = APIController.shared
-        controller.searchAlbums(query: editingKeyword,
-                              page: 1, limit: 10) { result in
+        controller.searchAlbums(
+            query: editingKeyword,
+            page: 1,
+            limit: 10
+        ) { result in
             DispatchQueue.main.async {
                 switch result {
-                case .success(let results):
-                    self.error = nil
-                    self.searchResults = results
-                case .failure(let error):
+                case let .success(results):
+                    error = nil
+                    searchResults = results
+                case let .failure(error):
                     self.error = error
-                    self.searchResults = nil
+                    searchResults = nil
                 }
-                self.isLoading = false
+                isLoading = false
             }
         }
     }
 }
 
-//struct SearchView: View {
+// struct SearchView: View {
 //  @State private var isUserSearchEnabled: Bool = false
 //  @State private var player: AVPlayer = AVPlayer()
 //  let AccentColor = Color(red : 0.9764705882352941, green: 0.17647058823529413, blue: 0.2823529411764706)
@@ -256,4 +260,4 @@ struct AlbumSearch: View {
 //      }
 //    }
 //  }
-//}
+// }

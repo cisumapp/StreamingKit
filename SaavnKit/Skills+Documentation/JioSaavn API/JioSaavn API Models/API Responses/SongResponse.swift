@@ -9,12 +9,12 @@ import Foundation
 
 struct JioSaavnSongResponse: Codable {
     let data: JioSaavnSongData
-    
+
     struct JioSaavnSongData: Codable {
         let total: Int
         let start: Int
         let results: [JioSaavnSongResult]
-        
+
         struct JioSaavnSongResult: Codable {
             let id: String
             let name: String

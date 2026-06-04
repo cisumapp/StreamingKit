@@ -8,10 +8,11 @@
 import Foundation
 
 // MARK: - DownloadURL
+
 struct DownloadUrl: Codable {
     let quality: Quality
     let url: String
-    
+
     enum Quality: String, Codable {
         case audio12Kbps = "12kbps"
         case audio48Kbps = "48kbps"
@@ -25,6 +26,7 @@ struct DownloadUrl: Codable {
 }
 
 // MARK: - Album
+
 struct JioSaavnAlbum: Codable {
     let id: String
     let name: String
@@ -32,11 +34,13 @@ struct JioSaavnAlbum: Codable {
 }
 
 // MARK: - Artists
+
 struct JioSaavnArtist: Codable {
     let primary, featured, all: [SimplifiedArtist]
 }
 
 // MARK: - All
+
 struct SimplifiedArtist: Codable {
     let id: String
     let name: String
@@ -46,7 +50,7 @@ struct SimplifiedArtist: Codable {
     let url: String
 }
 
-//enum Role: String, Codable {
+// enum Role: String, Codable {
 //    case featuredArtists = "featured_artists"
 //    case lyricist = "lyricist"
 //    case music = "music"
@@ -54,4 +58,4 @@ struct SimplifiedArtist: Codable {
 //    case singer = "singer"
 //    case empty = ""
 //    case singers = "singers"
-//}
+// }

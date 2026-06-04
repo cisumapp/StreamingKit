@@ -11,7 +11,7 @@ struct SearchFilterModel: Identifiable {
     private(set) var id: SearchFilter
     var size: CGSize = .zero
     var minX: CGFloat = .zero
-    
+
     enum SearchFilter: String, CaseIterable {
         case songs = "Songs"
         case artists = "Artists"

@@ -9,13 +9,12 @@ import Foundation
 
 struct JioSaavnAlbumResponse: Codable {
     let data: JioSaavnAlbumData
-    
+
     struct JioSaavnAlbumData: Codable {
         let total: Int
         let start: Int
         let results: [JioSaavnAlbumResult]
-        
-        
+
         struct JioSaavnAlbumResult: Codable {
             let id, name, type: String
             let year: Int
@@ -25,7 +24,7 @@ struct JioSaavnAlbumResponse: Codable {
             let artists: JioSaavnArtist
             let image: [DownloadUrl]
             let songs: [JioSaavnSongResult]
-            
+
             struct JioSaavnSongResult: Codable {
                 let id: String
                 let name: String

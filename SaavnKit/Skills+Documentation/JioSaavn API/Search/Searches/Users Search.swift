@@ -9,7 +9,7 @@ import SwiftUI
 
 struct UserSearch: View {
     @State private var searchUser = ""
-    let AccentColor = Color(red : 0.9764705882352941, green: 0.17647058823529413, blue: 0.2823529411764706)
+    let AccentColor = Color(red: 0.9764705882352941, green: 0.17647058823529413, blue: 0.2823529411764706)
     @StateObject var userSearchViewModel = UserSearchViewModel()
     var body: some View {
         NavigationStack {
@@ -19,7 +19,7 @@ struct UserSearch: View {
                         NavigationLink(value: user) {
                             VStack {
                                 UserCell(user: user)
-                                
+
                                 Divider()
                             }
                             .padding(.vertical, 4)
