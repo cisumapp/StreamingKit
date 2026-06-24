@@ -10,9 +10,6 @@
 [submodule "LyricsKit"]
 	path = LyricsKit
 	url = git@github.com:cisumapp/LyricsKit.git
-[submodule "MonochromeSDK"]
-	path = MonochromeSDK
-	url = git@github.com:cisumapp/MonochromeSDK.git
 [submodule "ProviderSDK"]
 	path = ProviderSDK
 	url = git@github.com:cisumapp/ProviderSDK.git
