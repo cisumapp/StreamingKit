@@ -1,2 +1,8 @@
 YouTubeSDK+Docs/
 .DS_Store
+
+# pre-reset backup archive (architecture reset, 2026-08-15)
+ProviderSDK.zip
+
+# gitingest context dumps
+providersdk.txt
